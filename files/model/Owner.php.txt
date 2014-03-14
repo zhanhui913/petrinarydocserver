@@ -1,0 +1,109 @@
+<?php
+/**
+ *  Model class for an Owner
+ */
+require_once 'Pet.php';
+
+/**
+ * Model class for an Owner
+ */
+class Owner implements JsonSerializable{
+   
+    /**
+    * Owner Email address (string)
+    */
+    private $ownerEmail;
+    /**
+    * Owner Username (string)
+    */
+    private $ownerUsername;
+    /**
+    * Owner Active Boolean 
+    */
+    private $ownerActive;
+    /**
+    * Owner Display Picture Path (string)
+    */
+    private $ownerPicPath;
+    /**
+    * Array of pet objects associated with an owner
+    */
+    private $petList = array();
+    
+    /**
+     * Populate every field in Owner object
+     * @param Array $p_info_array Array with all information on Owner
+     * @param Array $p_pet_list Array of all Pet objects for an Owner
+     */
+    public function setInfo($p_info_array,$p_pet_list){
+        $this->setEmail($p_info_array['email']);
+        $this->setUsername($p_info_array['username']);
+        $this->setActive($p_info_array['active']);
+        $this->setPicPath($p_info_array['pic_path']);
+        $this->setPetList($p_pet_list);
+    }
+
+    /**
+     * Getters
+     */
+
+    public function getEmail(){
+        return $this->ownerEmail;
+    }
+
+    public function getUsername(){
+        return $this->ownerUsername;
+    }
+
+    public function getActiveStatus(){
+        return $this->ownerActive;
+    }
+
+    public function getPetList(){
+        return $this->petList;
+    }
+    
+    public function getPicPath(){
+        return $this->ownerPicPath;
+    }
+
+    /**
+     * Setters
+     */
+
+    public function setPicPath($p_path){
+        $this->ownerPicPath = $p_path;
+    }
+
+    public function setEmail($p_email){
+        $this->ownerEmail = $p_email;
+    }
+    
+    public function setUsername($p_username){
+        $this->ownerUsername = $p_username;
+    }
+
+    public function setActive($p_active){
+        $this->ownerActive = $p_active;
+    }
+
+    public function setPetList($p_petList){
+        $this->petList = $p_petList;
+    }
+
+    /**
+    * Data to be serialized into JSON
+    * @return Array
+    */
+    public function jsonSerialize(){
+        return array(
+            'email'     => $this->ownerEmail,
+            'username'  => $this->ownerUsername,
+            'active'    => $this->ownerActive,
+            'avatar'    => $this->ownerPicPath,
+            'pets'      => $this->petList
+        );
+    }
+}
+?>
+

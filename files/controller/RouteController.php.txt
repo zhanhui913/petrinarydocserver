@@ -1,0 +1,41 @@
+<?php
+/**
+ * Interface defining a view controller for a particular path.
+ * Note that not every controller will necessarily implement all functions 
+ * as a particular route may not expose a particular piece
+ * of functionality (e.g., there is no index operation for /pet path).
+ */
+interface RouteController {
+
+	/**
+	 * Function called on GET request to a route but with no particular URI
+	 * specificed (e.g., /clinics)
+	 */
+	public function index(&$args);
+
+	/**
+	 * Function called on POST request to a route but with no particular URI
+	 * specified -- usually used in the creation of a resource.
+	 */
+	public function create(&$args);
+
+	/**
+	 * Function called on GET request to a route with a particular URI specified.
+	 */
+	public function show(&$args);
+
+	/**
+	 * Function called on PUT request to a route with a particular URI specified.
+	 */
+	public function update(&$args);
+
+	/**
+	 * Function called on DELETE request to a route with a particular URI
+	 * specified.
+	 */
+	public function destroy(&$args);
+}
+
+
+?>
+

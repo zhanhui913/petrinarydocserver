@@ -1,0 +1,218 @@
+<?php
+
+/**
+ * @deprecated
+ *  Model class for a Patient Owner
+ */
+class PatientOwner implements JsonSerializable {
+
+	/**
+	 * @deprecated
+	*/
+	private $clinicId;
+	/**
+	 * @deprecated
+	*/
+	private $patientId;
+	/**
+	 * @deprecated
+	*/
+	private $ownerId;
+	/**
+	 * @deprecated
+	*/
+	private $firstName;
+	/**
+	 * @deprecated
+	*/
+	private $lastName;
+	/**
+	 * @deprecated
+	*/
+	private $address;
+	/**
+	 * @deprecated
+	*/
+	private $city;
+	/**
+	 * @deprecated
+	*/
+	private $province;
+	/**
+	 * @deprecated
+	*/
+	private $postalCode;
+	/**
+	 * @deprecated
+	*/
+	private $homeNumber;
+	/**
+	 * @deprecated
+	*/
+	private $cellNumber;
+	/**
+	 * @deprecated
+	*/
+	private $email;
+	/**
+	 * @deprecated
+	*/
+	private $hasOptedIn;
+
+	/**
+	* @deprecated
+	*	Populate every field in patient_owner object
+	*/
+	public function setInfo($p_info_array){
+		$this->setClinicId($p_info_array['clinic_id']);
+		$this->setPatientId($p_info_array['patient_id']);
+		$this->setOwnerId($p_info_array['owner_id']);
+		$this->setFirstName($p_info_array['firstname']);
+		$this->setLastName($p_info_array['lastname']);
+		$this->setAddress($p_info_array['address']);
+		$this->setCity($p_info_array['city']);
+		$this->setProvince($p_info_array['province']);
+		$this->setPostal($p_info_array['postal_code']);
+		$this->setHomePhone($p_info_array['home_number']);
+		$this->setCellPhone($p_info_array['cell_number']);
+		$this->setEmail($p_info_array['email']);
+		$this->setHasOptedIn($p_info_array['hasOptedIn']);
+	}
+
+	/**
+	* 	Getters
+	*/
+
+	public function getClinicId(){
+		return $this->clinicId;
+	}
+
+	public function getPatientId(){
+		return $this->patientId;
+	}
+
+	public function getOwnerId(){
+		return $this->ownerId;
+	}
+
+	public function getFirstName(){
+		return $this->firstName;
+	}
+
+	public function getLastName(){
+		return $this->lastName;
+	}
+
+	public function getAddress(){
+		return $this->address;
+	}
+
+	public function getCity(){
+		return $this->city;
+	}
+
+	public function getProvince(){
+		return $this->province;
+	}
+
+	public function getPostal(){
+		return $this->postalCode;
+	}
+
+	public function getHomePhone(){
+		return $this->home_phone;
+	}
+
+	public function getCellPhone(){
+		return $this->cellPhone;
+	}
+
+	public function getEmail(){
+		return $this->email;
+	}
+
+	public function getHasOptedIn(){
+		return $this->hasOptedIn;
+	}
+
+	/**
+	* 	Setters
+	*/
+
+	public function setClinicId($p_clinic_id){
+		$this->clinicId = $p_clinic_id;
+	}
+
+	public function setPatientId($p_patient_id){
+		$this->patientId = $p_patient_id;
+	}
+
+	public function setOwnerId($p_owner_id){
+		$this->ownerId = $p_owner_id;
+	}
+
+	public function setFirstName($p_firstname){
+		$this->firstName = $p_firstname;
+	}
+
+	public function setLastName($p_lastname){
+		$this->lastName = $p_lastname;
+	}
+
+	public function setAddress($p_address){
+		$this->address = $p_address;
+	}
+
+	public function setCity($p_city){
+		$this->city = $p_city;
+	}
+
+	public function setProvince($p_province){
+		$this->province = $p_province;
+	}
+
+	public function setPostal($p_postal){
+		$this->postalCode = $p_postal;
+	}
+
+	public function setHomePhone($p_hphone){
+		$this->homeNumber = $p_hphone;
+	}
+
+	public function setCellPhone($p_cphone){
+		$this->cellNumber = $p_cphone;
+	}	
+
+	public function setEmail($p_email){
+		$this->email = $p_email;
+	}
+
+	public function setHasOptedIn($p_hasoptedin){
+		$this->hasOptedIn = $p_hasoptedin;
+	}
+
+	/**
+	 * @deprecated
+	*/
+	public function jsonSerialize() {
+		return array(
+			'clinicId' 			=> $this->clinicId,
+			'patientId' 		=> $this->patientId,
+			'ownerId'			=> $this->ownerId,
+			'ownerFirstName'	=> $this->firstName,
+			'ownerLastName'		=> $this->lastName,
+			'ownerEmail'		=> $this->email,
+			'ownerAddress'		=> $this->address,
+			'ownerCity'			=> $this->city,
+			'ownerProvince'		=> $this->province,
+			'ownerPostalCode'	=> $this->postalCode,
+			'ownerHomeNumber'	=> $this->homeNumber,
+			'ownerCellNumber'	=> $this->cellNumber,
+			'ownerPs'			=> $this->hasOptedIn
+		);
+	}
+
+}
+
+?>
+

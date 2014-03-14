@@ -1,0 +1,73 @@
+<?php 
+
+/**
+ *  Model class for a Interest 
+ */
+class InterestRecord implements JsonSerializable{
+
+    /**
+    * Pet Id that the interest is assigned to (UUID) 
+    */
+    private $petId;
+    /**
+    * Associated Interest object for the interest record
+    */
+    private $interest;
+    /**
+    * Associated Category object for the interest record 
+    */
+    private $category;
+
+    /**
+     * Populate every field in Interest object
+     * @param Array $p_info_array Array with all information on Interest
+     */
+    public function setInfo($p_info_array,$p_interest,$p_category){
+        $this->setPetId($p_info_array['pet_id']);
+        $this->setInterest($p_interest);
+        $this->setCategory($p_category);
+    }
+    
+    /*
+     * Getters
+     */
+
+    public function getPetId(){
+        return $this->petId;
+    }
+    public function getInterest(){
+        return $this->interest;
+    }
+    public function getCategory(){
+        return $this->category;
+    }
+    
+    /*
+     * Setters
+     */
+
+    private function setPetId($p_pet_id){
+        $this->petId = $p_pet_id;
+    }
+
+    private function setInterest($p_interest){
+        $this->interest = $p_interest;
+    }
+
+    private function setCategory($p_category){
+        $this->category = $p_category;
+    }
+
+    /**
+     * Data to be serialized into JSON
+     * @return Array
+     */
+    public function jsonSerialize(){
+        return array(
+            'petId' 	=> $this->petId,
+            'interest'  => $this->interest,
+            'category'  => $this->category
+        );
+    }
+}
+

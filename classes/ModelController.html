@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta charset="utf-8"/>
+    <title>API Documentation</title>
+    <meta name="author" content=""/>
+    <meta name="description" content=""/>
+
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/prism.css" rel="stylesheet" media="all"/>
+    <link href="../css/template.css" rel="stylesheet" media="all"/>
+    
+    <!--[if lt IE 9]>
+    <script src="https://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script>
+    <![endif]-->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+    <script src="../js/jquery.smooth-scroll.js"></script>
+    <script src="../js/prism.min.js"></script>
+    <!-- TODO: Add http://jscrollpane.kelvinluck.com/ to style the scrollbars for browsers not using webkit-->
+    <script type="text/javascript">
+    function loadExternalCodeSnippets() {
+        Array.prototype.slice.call(document.querySelectorAll('pre[data-src]')).forEach(function (pre) {
+            var src = pre.getAttribute('data-src');
+            var extension = (src.match(/\.(\w+)$/) || [, ''])[1];
+            var language = 'php';
+
+            var code = document.createElement('code');
+            code.className = 'language-' + language;
+
+            pre.textContent = '';
+
+            code.textContent = 'Loading…';
+
+            pre.appendChild(code);
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', src, true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+
+                    if (xhr.status < 400 && xhr.responseText) {
+                        code.textContent = xhr.responseText;
+
+                        Prism.highlightElement(code);
+                    }
+                    else if (xhr.status >= 400) {
+                        code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
+                    }
+                    else {
+                        code.textContent = '✖ Error: File does not exist or is empty';
+                    }
+                }
+            };
+
+            xhr.send(null);
+        });
+    }
+
+    $(document).ready(function(){
+        loadExternalCodeSnippets();
+    });
+    $('#source-view').on('shown', function () {
+        loadExternalCodeSnippets();
+    })
+</script>
+
+    <link rel="shortcut icon" href="../images/favicon.ico"/>
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="../images/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="../images/apple-touch-icon-114x114.png"/>
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <i class="icon-ellipsis-vertical"></i>
+            </a>
+            <a class="brand" href="../index.html">API Documentation</a>
+
+            <div class="nav-collapse">
+                <ul class="nav pull-right">
+                    <li class="dropdown">
+                        <a href="../index.html" class="dropdown-toggle" data-toggle="dropdown">
+                            API Documentation <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                                                    </ul>
+                    </li>
+                    <li class="dropdown" id="charts-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Charts <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../graphs/class.html">
+                                    <i class="icon-list-alt"></i>&#160;Class hierarchy diagram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown" id="reports-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Reports <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../reports/errors.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Errors <span class="label label-info pull-right">524</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/markers.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Markers <span class="label label-info pull-right">21</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--<div class="go_to_top">-->
+    <!--<a href="#___" style="color: inherit">Back to top&#160;&#160;<i class="icon-upload icon-white"></i></a>-->
+    <!--</div>-->
+</div>
+
+<div id="___" class="container-fluid">
+        <section class="row-fluid">
+        <div class="span2 sidebar">
+                                <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle " data-toggle="collapse" data-target="#namespace-74945431"></a>
+                                <a href="../namespaces/default.html" style="margin-left: 30px; padding-left: 0">\</a>
+            </div>
+            <div id="namespace-74945431" class="accordion-body collapse in">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/RouteController.html">RouteController</a></li>
+                                                                                                    <li class="class"><a href="../classes/Achievement.html">Achievement</a></li>
+                                                    <li class="class"><a href="../classes/PatientOwner.html">PatientOwner</a></li>
+                                                    <li class="class"><a href="../classes/Pet.html">Pet</a></li>
+                                                    <li class="class"><a href="../classes/ModelController.html">ModelController</a></li>
+                                                    <li class="class"><a href="../classes/AuthController.html">AuthController</a></li>
+                                                    <li class="class"><a href="../classes/Owner.html">Owner</a></li>
+                                                    <li class="class"><a href="../classes/ClinicsController.html">ClinicsController</a></li>
+                                                    <li class="class"><a href="../classes/Category.html">Category</a></li>
+                                                    <li class="class"><a href="../classes/Vet.html">Vet</a></li>
+                                                    <li class="class"><a href="../classes/EnforceSSL.html">EnforceSSL</a></li>
+                                                    <li class="class"><a href="../classes/InterestRecordController.html">InterestRecordController</a></li>
+                                                    <li class="class"><a href="../classes/AchievementRecord.html">AchievementRecord</a></li>
+                                                    <li class="class"><a href="../classes/InterestController.html">InterestController</a></li>
+                                                    <li class="class"><a href="../classes/Picture.html">Picture</a></li>
+                                                    <li class="class"><a href="../classes/OwnerController.html">OwnerController</a></li>
+                                                    <li class="class"><a href="../classes/InterestRecord.html">InterestRecord</a></li>
+                                                    <li class="class"><a href="../classes/AdminController.html">AdminController</a></li>
+                                                    <li class="class"><a href="../classes/PictureController.html">PictureController</a></li>
+                                                    <li class="class"><a href="../classes/PetController.html">PetController</a></li>
+                                                    <li class="class"><a href="../classes/Clinic.html">Clinic</a></li>
+                                                    <li class="class"><a href="../classes/Admin.html">Admin</a></li>
+                                                    <li class="class"><a href="../classes/LogoutController.html">LogoutController</a></li>
+                                                    <li class="class"><a href="../classes/CategoryController.html">CategoryController</a></li>
+                                                    <li class="class"><a href="../classes/PDOHelper.html">PDOHelper</a></li>
+                                                    <li class="class"><a href="../classes/LoginController.html">LoginController</a></li>
+                                                    <li class="class"><a href="../classes/PDOAdapter.html">PDOAdapter</a></li>
+                                                    <li class="class"><a href="../classes/Interest.html">Interest</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </section>
+    <section class="row-fluid">
+        <div class="span10 offset2">
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <nav>
+                                                <a href="../namespaces/default.html">\</a> <i class="icon-level-up"></i>
+                                            </nav>
+                    <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal"><i class="icon-code"></i></a>
+
+                    <h1><small>\</small>ModelController</h1>
+                    <p><em>The interface that provides methods to the front end to call</em></p>
+                    
+
+                    <section id="summary">
+                        <h2>Summary</h2>
+                        <section class="row-fluid heading">
+                            <section class="span4">
+                                <a href="#methods">Methods</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#properties">Properties</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#constants">Constants</a>
+                            </section>
+                        </section>
+                        <section class="row-fluid public">
+                            <section class="span4">
+                                                                    <a href="../classes/ModelController.html#method___construct" class="">__construct()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_checkAdminLogin" class="">checkAdminLogin()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_checkOwnerAccount" class="">checkOwnerAccount()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_createOwner" class="">createOwner()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updateOwnerUsername" class="">updateOwnerUsername()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updateOwnerActiveStatus" class="">updateOwnerActiveStatus()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updateOwnerPassword" class="">updateOwnerPassword()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getOwnerObject" class="">getOwnerObject()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getVetObject" class="deprecated">getVetObject()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getVetInfo" class="deprecated">getVetInfo()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getPet" class="">getPet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getPetList" class="">getPetList()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addPet" class="">addPet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updatePet" class="">updatePet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_deletePet" class="">deletePet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_petToDbArray" class="">petToDbArray()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getInterestRecord" class="">getInterestRecord()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addInterestRecord" class="">addInterestRecord()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_deleteInterestRecord" class="">deleteInterestRecord()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getAllInterest" class="">getAllInterest()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getInterest" class="">getInterest()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addInterest" class="">addInterest()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_deleteInterest" class="">deleteInterest()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_editInterestDescription" class="">editInterestDescription()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_editInterestSrc" class="">editInterestSrc()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_editInterestCategory" class="">editInterestCategory()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getAllCategory" class="">getAllCategory()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getCategory" class="">getCategory()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addCategory" class="">addCategory()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_deleteCategory" class="">deleteCategory()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getPictures" class="">getPictures()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addPicture" class="">addPicture()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_deletePicture" class="">deletePicture()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updatePictureLikes" class="">updatePictureLikes()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updatePictureViews" class="">updatePictureViews()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_updatePictureDescription" class="">updatePictureDescription()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getClinics" class="">getClinics()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_checkClinicAccount" class="">checkClinicAccount()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_createClinic" class="">createClinic()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getClinicObject" class="deprecated">getClinicObject()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_ownerToDbArray" class="">ownerToDbArray()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getPatientOwnerObject" class="deprecated">getPatientOwnerObject()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getAchievementSet" class="">getAchievementSet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getAllAchievementSet" class="">getAllAchievementSet()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_getAchievementRecordObject" class="">getAchievementRecordObject()</a><br />
+                                                                    <a href="../classes/ModelController.html#method_addAchievements" class="">addAchievements()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No public properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No constants found</em>
+                                                            </section>
+                        </section>
+                        <section class="row-fluid protected">
+                            <section class="span4">
+                                                                    <em>No protected methods found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No protected properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                        <section class="row-fluid private">
+                            <section class="span4">
+                                                                    <em>No private methods found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <a href="../classes/ModelController.html#property_helper" class="">$helper</a><br />
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                    </section>
+                </div>
+                <aside class="span4 detailsbar">
+                                        
+                    
+                    <dl>
+                        <dt>File</dt>
+                            <dd><a href="../files/controller.ModelController.php.html"><div class="path-wrapper">controller/ModelController.php</div></a></dd>
+                                                <dt>Package</dt>
+                            <dd><div class="namespace-wrapper">\Default</div></dd>
+                                                <dt>Class hierarchy</dt>
+                            <dd class="hierarchy">
+                                                                                                                                                                    <div class="namespace-wrapper">\ModelController</div>
+                            </dd>
+
+                        
+                        
+                        
+                        
+                                                                        </dl>
+                    <h2>Tags</h2>
+                    <table class="table table-condensed">
+                                            <tr>
+                            <th>
+                                todo
+                            </th>
+                            <td>
+                                                            </td>
+                        </tr>
+                                        </table>
+                </aside>
+            </div>
+
+                        
+                                    <a id="properties" name="properties"></a>
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <h2>Properties</h2>
+                </div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_helper" name="property_helper" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$helper</h3>
+                <pre class="signature">$helper</pre>
+                <p><em>Declaring a PDO_Helper</em></p>
+                
+
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                            
+                                    <a id="methods" name="methods"></a>
+            <div class="row-fluid">
+                <div class="span8 content class"><h2>Methods</h2></div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method___construct" name="method___construct" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">__construct()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">__construct()</pre>
+                <p><em>Instantiating a new PDOHelper class to run queries upon construction</em></p>
+                
+
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_checkAdminLogin" name="method_checkAdminLogin" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">checkAdminLogin()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">checkAdminLogin(String <span class="argument">$p_email</span>) : Object</pre>
+                <p><em>Get the Admin object specified by the provided email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns an Admin object if exist, null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_checkOwnerAccount" name="method_checkOwnerAccount" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">checkOwnerAccount()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">checkOwnerAccount(String <span class="argument">$p_ownerId</span>) : Array</pre>
+                <p><em>Get the password,salt,and active status for a specific owner by email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_ownerId</td>
+                                <td><p>Can be either password or email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>Returns array of password,salt,and active status if the email
+exists,else returns null.</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_createOwner" name="method_createOwner" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">createOwner()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">createOwner(String <span class="argument">$p_email</span>, String <span class="argument">$p_password</span>, String <span class="argument">$p_salt</span>, String <span class="argument">$p_username</span>, String <span class="argument">$p_pic_path</span>) : Boolean</pre>
+                <p><em>Given email, passowrd, salt, username and picture path, create a new owner</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_password</td>
+                                <td><p>Provided password</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_salt</td>
+                                <td><p>Provided salt</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_username</td>
+                                <td><p>Provided username</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pic_path</td>
+                                <td><p>Provided picture path</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updateOwnerUsername" name="method_updateOwnerUsername" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updateOwnerUsername()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updateOwnerUsername(String <span class="argument">$p_email</span>, String <span class="argument">$p_username</span>) : Boolean</pre>
+                <p><em>Update an owner&#039;s username by email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided Email</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_username</td>
+                                <td><p>Provided new username</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updateOwnerActiveStatus" name="method_updateOwnerActiveStatus" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updateOwnerActiveStatus()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updateOwnerActiveStatus(String <span class="argument">$p_email</span>, Boolean <span class="argument">$p_active</span>) : Boolean</pre>
+                <p><em>Update an owner&#039;s account status by email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided Owner's email</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Boolean</td>
+                                <td>$p_active</td>
+                                <td><p>Provided active status</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updateOwnerPassword" name="method_updateOwnerPassword" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updateOwnerPassword()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updateOwnerPassword(String <span class="argument">$p_email</span>, String <span class="argument">$p_password</span>, String <span class="argument">$p_salt</span>) : Boolean</pre>
+                <p><em>Update an owner&#039;s password and salt by email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_password</td>
+                                <td><p>Provided password</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_salt</td>
+                                <td><p>Provided salt</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getOwnerObject" name="method_getOwnerObject" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getOwnerObject()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getOwnerObject(String <span class="argument">$p_ownerId</span>) : Object</pre>
+                <p><em>Get an owner object by either username or email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_ownerId</td>
+                                <td><p>Provided username or email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns owner object if found, otherwise returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getVetObject" name="method_getVetObject" class="anchor"></a>
+            <article class="method">
+                <h3 class="public deprecated">getVetObject()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getVetObject(String <span class="argument">$p_email</span>) : Object</pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns the Vet Object if found, else returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                                <aside class="alert alert-block alert-error">
+                    <h4>Deprecated</h4>
+                    Returns vet object if email is valid otherwise return null
+                </aside>
+                        <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getVetInfo" name="method_getVetInfo" class="anchor"></a>
+            <article class="method">
+                <h3 class="public deprecated">getVetInfo()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getVetInfo(String <span class="argument">$p_vet</span>) : Object</pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_vet</td>
+                                <td><p>Provided Vet Model Object</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns the Vet Object if found, else returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                                <aside class="alert alert-block alert-error">
+                    <h4>Deprecated</h4>
+                    GetVetObject already returns the object itself with all info
+Parameter has to be vet object, returns the same vet object with populated fields
+                </aside>
+                        <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getPet" name="method_getPet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getPet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getPet(String <span class="argument">$p_pet_id</span>) : Object</pre>
+                <p><em>Gets the pet model object</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided pet ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns Pet object if found, else returns null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getPetList" name="method_getPetList" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getPetList()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getPetList(String <span class="argument">$p_email</span>) : Object</pre>
+                <p><em>Get an array of pet objects through owner email(owner_id)</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Returns array of pet objects if email is found, returns null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addPet" name="method_addPet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addPet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addPet(String <span class="argument">$p_name</span>, String <span class="argument">$p_ownerId</span>, String <span class="argument">$p_birthday</span>, String <span class="argument">$p_sex</span>, Integer <span class="argument">$p_age</span>, String <span class="argument">$p_colour</span>, String <span class="argument">$p_breed</span>, String <span class="argument">$p_species</span>, Boolean <span class="argument">$p_isNeutered</span>, Integer <span class="argument">$p_netPoints</span>) : String|Boolean</pre>
+                <p><em>Add a pet to an owner</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_name</td>
+                                <td><p>Provided name</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_ownerId</td>
+                                <td><p>Provided ownerId (owner email)</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_birthday</td>
+                                <td><p>Provided birthday (YYYY-MM-DD)</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_sex</td>
+                                <td><p>Provided sex</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Integer</td>
+                                <td>$p_age</td>
+                                <td><p>Provided age</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_colour</td>
+                                <td><p>Provided colour</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_breed</td>
+                                <td><p>Provided breed</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_species</td>
+                                <td><p>Provided species</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Boolean</td>
+                                <td>$p_isNeutered</td>
+                                <td><p>Provided isNeutered</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Integer</td>
+                                <td>$p_netPoints</td>
+                                <td><p>Provided netPoints</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>Return Pet's ID if successful, null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updatePet" name="method_updatePet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updatePet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updatePet(String <span class="argument">$p_petId</span>, String <span class="argument">$p_name</span>, String <span class="argument">$p_birthday</span>, String <span class="argument">$p_sex</span>, Integer <span class="argument">$p_age</span>, String <span class="argument">$p_colour</span>, String <span class="argument">$p_breed</span>, String <span class="argument">$p_species</span>, Boolean <span class="argument">$p_isNeutered</span>) : Boolean</pre>
+                <p><em>Update a pet&#039;s information</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_petId</td>
+                                <td><p>Provided pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_name</td>
+                                <td><p>Provided name</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_birthday</td>
+                                <td><p>Provided birthday (YYYY-MM-DD)</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_sex</td>
+                                <td><p>Provided sex</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Integer</td>
+                                <td>$p_age</td>
+                                <td><p>Provided age</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_colour</td>
+                                <td><p>Provided colour</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_breed</td>
+                                <td><p>Provided breed</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_species</td>
+                                <td><p>Provided species</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Boolean</td>
+                                <td>$p_isNeutered</td>
+                                <td><p>Provided isNeutered</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deletePet" name="method_deletePet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deletePet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deletePet(String <span class="argument">$p_email</span>, String <span class="argument">$p_petId</span>) : Boolean</pre>
+                <p><em>Delete a pet from an owner&#039;s account by email and pet id</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided email (owner_id)</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_petId</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_petToDbArray" name="method_petToDbArray" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">petToDbArray()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">petToDbArray(Array <span class="argument">$petDef</span>) : Array</pre>
+                <p><em>Translates key values in associative array providing values for
+pet model from &quot;client side&quot; camelCase style to the keys
+used by the db.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>Array</td>
+                                <td>$petDef</td>
+                                <td><p>Associate array providing values for patient model with key values in the format expected/provided by the client side</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An associate array as described above.</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getInterestRecord" name="method_getInterestRecord" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getInterestRecord()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getInterestRecord( <span class="argument">$p_pet_id</span>) : Array</pre>
+                <p><em>Gets all interest records object info based on pet ID</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$p_pet_id</td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of interest objects related to the Pet's ID</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addInterestRecord" name="method_addInterestRecord" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addInterestRecord()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addInterestRecord(String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_interest_id</span>) : String|Boolean</pre>
+                <p><em>Use the given pet id and interest id to add a interest record</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided Interest's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>Returns the concatenation of both Pet and Interest ID if successful, return null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deleteInterestRecord" name="method_deleteInterestRecord" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deleteInterestRecord()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deleteInterestRecord(String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_interest_id</span>) : Boolean</pre>
+                <p><em>Delete a interest record based on pet id and interest id</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided Interest's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAllInterest" name="method_getAllInterest" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAllInterest()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAllInterest() : Array</pre>
+                <p><em>Get all interest objects</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>Array of Interest Objects</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getInterest" name="method_getInterest" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getInterest()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getInterest(String <span class="argument">$p_interest_id</span>) : Object</pre>
+                <p><em>Get a specific interest object</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided Interest ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Interest Model Object</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addInterest" name="method_addInterest" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addInterest()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addInterest(\String] <span class="argument">$p_interest_description</span>, String <span class="argument">$p_category_id</span>,  <span class="argument">$p_interest_src</span>) : String|Boolean</pre>
+                <p><em>Adds an interest into the db</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>\String]</td>
+                                <td>$p_interest_description</td>
+                                <td><p>Provided Interest description</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_category_id</td>
+                                <td><p>Provided category ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$p_interest_src</td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>Returns Interest ID if inserted successfully, null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deleteInterest" name="method_deleteInterest" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deleteInterest()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deleteInterest(String <span class="argument">$p_interest_id</span>) : Boolean</pre>
+                <p><em>Deletes an interest from the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided interest ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if deleted successfully, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_editInterestDescription" name="method_editInterestDescription" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">editInterestDescription()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">editInterestDescription(String <span class="argument">$p_interest_id</span>, String <span class="argument">$p_interest_description</span>) : Boolean</pre>
+                <p><em>Edits an interest description from the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided interest ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_description</td>
+                                <td><p>Provided new interest Description</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if updated successfully, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_editInterestSrc" name="method_editInterestSrc" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">editInterestSrc()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">editInterestSrc(String <span class="argument">$p_interest_id</span>, String <span class="argument">$p_interest_src</span>) : Boolean</pre>
+                <p><em>Edits an interest src from the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided interest ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_src</td>
+                                <td><p>Provided new interest src</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if updated successfully, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_editInterestCategory" name="method_editInterestCategory" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">editInterestCategory()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">editInterestCategory(String <span class="argument">$p_interest_id</span>, String <span class="argument">$p_interest_category</span>) : Boolean</pre>
+                <p><em>Edits an interest category ID from the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_id</td>
+                                <td><p>Provided interest ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_interest_category</td>
+                                <td><p>Provided new interest Category ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if updated successfully, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAllCategory" name="method_getAllCategory" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAllCategory()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAllCategory() : Array</pre>
+                <p><em>Get all category objects</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of all Category Objects</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getCategory" name="method_getCategory" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getCategory()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getCategory(String <span class="argument">$p_category_id</span>) : Object</pre>
+                <p><em>Get a specific category object</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_category_id</td>
+                                <td><p>Provided Category ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Category Object</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addCategory" name="method_addCategory" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addCategory()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addCategory(String <span class="argument">$p_category_description</span>) : String|Boolean</pre>
+                <p><em>Adds a category into the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_category_description</td>
+                                <td><p>Provided category description</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>Returns Category ID if inserted successfully, null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deleteCategory" name="method_deleteCategory" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deleteCategory()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deleteCategory(String <span class="argument">$p_category_id</span>) : Boolean</pre>
+                <p><em>Deletes a category from the database</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_category_id</td>
+                                <td><p>Provided category ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>Returns true if deleted successfully, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getPictures" name="method_getPictures" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getPictures()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getPictures(String <span class="argument">$p_pet_id</span>) : Array</pre>
+                <p><em>Gets all picture object info based on pet ID</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided the Pet's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of picture objects</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addPicture" name="method_addPicture" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addPicture()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addPicture(String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_path</span>, String <span class="argument">$p_description</span>) : String|Boolean</pre>
+                <p><em>Add a picture for a specific pet</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_path</td>
+                                <td><p>Provided picture path</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_description</td>
+                                <td><p>Provided description of the picture</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>Returns a unique Picture ID if successful, return null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deletePicture" name="method_deletePicture" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deletePicture()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deletePicture(String <span class="argument">$p_petId</span>, String <span class="argument">$p_picId</span>) : Boolean</pre>
+                <p><em>Delete a picture from a pet</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_petId</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_picId</td>
+                                <td><p>Provided Picture's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>True if deleted successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updatePictureLikes" name="method_updatePictureLikes" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updatePictureLikes()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updatePictureLikes(String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_pic_id</span>) : Boolean</pre>
+                <p><em>Update a pet&#039;s photo likes by 1</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pic_id</td>
+                                <td><p>Provided Picture's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>True if updated successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updatePictureViews" name="method_updatePictureViews" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updatePictureViews()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updatePictureViews(String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_pic_id</span>) : Boolean</pre>
+                <p><em>Update a pet&#039;s photo views by 1</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pic_id</td>
+                                <td><p>Provided Picture's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>True if updated successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_updatePictureDescription" name="method_updatePictureDescription" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">updatePictureDescription()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">updatePictureDescription(Array <span class="argument">$p_picture</span>) : Boolean</pre>
+                <p><em>Update a pet&#039;s picture&#039;s description</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>Array</td>
+                                <td>$p_picture</td>
+                                <td><p>An associative Array that contains description, petId, and picId</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>True if updated successful, false otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getClinics" name="method_getClinics" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getClinics()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getClinics() : Array</pre>
+                <p><em>Gets all clinic object info</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of clinic objects</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_checkClinicAccount" name="method_checkClinicAccount" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">checkClinicAccount()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">checkClinicAccount(String <span class="argument">$p_email</span>) : Array</pre>
+                <p><em>Get the password and salt for a specific clinic by email</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_email</td>
+                                <td><p>Provided clinic email</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of password,salt, and active if the email
+exists,else returns null.</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_createClinic" name="method_createClinic" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">createClinic()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">createClinic(Array <span class="argument">$p_clinic_array</span>) : String|Boolean</pre>
+                <p><em>Given array of clinic info, create a new clinic and return clinic id</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>Array</td>
+                                <td>$p_clinic_array</td>
+                                <td><p>Provided an associative array that contains all the clinic info</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    String|Boolean
+                                            &mdash; <p>The Clinic's ID if successful, null otherwise</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getClinicObject" name="method_getClinicObject" class="anchor"></a>
+            <article class="method">
+                <h3 class="public deprecated">getClinicObject()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getClinicObject(String <span class="argument">$p_clinic_id</span>) : Object|Boolean</pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_clinic_id</td>
+                                <td><p>Provided clinic id</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object|Boolean
+                                            &mdash; <p>Returns a clinic object if found, otherwise returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                                <aside class="alert alert-block alert-error">
+                    <h4>Deprecated</h4>
+                    Get an clinic object when supplied a clinic id
+                </aside>
+                        <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_ownerToDbArray" name="method_ownerToDbArray" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">ownerToDbArray()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">ownerToDbArray(Array <span class="argument">$ownerDef</span>) : Array</pre>
+                <p><em>Translates key values in associative array providing values for
+patient owner model from &quot;client side&quot; camelCase style to the keys
+used by the db.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>Array</td>
+                                <td>$ownerDef</td>
+                                <td><p>An associate array providing values for patient owner model with key values in the format expected/provided by the client side</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An associate array as described above.</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getPatientOwnerObject" name="method_getPatientOwnerObject" class="anchor"></a>
+            <article class="method">
+                <h3 class="public deprecated">getPatientOwnerObject()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getPatientOwnerObject(String <span class="argument">$p_clinic_id</span>, String <span class="argument">$p_patient_id</span>) : Object|Boolean</pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_clinic_id</td>
+                                <td><p>Provided Clinic ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_patient_id</td>
+                                <td><p>Provided Patient ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object|Boolean
+                                            &mdash; <p>Patient Owner object if successful, else returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                                <aside class="alert alert-block alert-error">
+                    <h4>Deprecated</h4>
+                    Get patient owner information
+                </aside>
+                        <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAchievementSet" name="method_getAchievementSet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAchievementSet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAchievementSet(String <span class="argument">$p_achievement_id</span>) : Object</pre>
+                <p><em>Get achievement set information</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_achievement_id</td>
+                                <td><p>Provided achievement ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object
+                                            &mdash; <p>Achievement Set Object with fields</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAllAchievementSet" name="method_getAllAchievementSet" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAllAchievementSet()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAllAchievementSet() : Array</pre>
+                <p><em>Get all achievement set objects</em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    Array
+                                            &mdash; <p>An array of AchievementSet Objects</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getAchievementRecordObject" name="method_getAchievementRecordObject" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getAchievementRecordObject()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getAchievementRecordObject(String <span class="argument">$p_achievement_id</span>, String <span class="argument">$p_pet_id</span>) : Object|Boolean</pre>
+                <p><em>Get achievement record information</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_achievement_id</td>
+                                <td><p>Provided Achievement's ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet's ID</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Object|Boolean
+                                            &mdash; <p>Achievement Record Object if successful, else returns null</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_addAchievements" name="method_addAchievements" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">addAchievements()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">addAchievements(String <span class="argument">$p_achievement_id</span>, String <span class="argument">$p_pet_id</span>, String <span class="argument">$p_vet_id</span>, Integer <span class="argument">$p_points</span>) : Boolean</pre>
+                <p><em>Add achievement record information</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_achievement_id</td>
+                                <td><p>Provided Achievement ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_pet_id</td>
+                                <td><p>Provided Pet ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>String</td>
+                                <td>$p_vet_id</td>
+                                <td><p>Provided Vet ID</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>Integer</td>
+                                <td>$p_points</td>
+                                <td><p>Provided Points</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    Boolean
+                                            &mdash; <p>True if added successfully, else false</p>
+                                                </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            todo
+                        </th>
+                        <td>
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                                    </div>
+    </section>
+
+    <div id="source-view" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="source-view-label" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="source-view-label">ModelController.php</h3>
+        </div>
+        <div class="modal-body">
+            <pre data-src="../files/controller/ModelController.php.txt" class="language-php line-numbers"></pre>
+        </div>
+    </div>
+
+    <footer class="row-fluid">
+        <section class="span10 offset2">
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <section class="row-fluid footer-sections">
+                        <section class="span4">
+                                                        <h1><i class="icon-code"></i></h1>
+                            <div>
+                                <ul>
+                                                                    </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-bar-chart"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../graphs/class.html">Class Hierarchy Diagram</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-pushpin"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../reports/errors.html">Errors</a></li>
+                                    <li><a href="../reports/markers.html">Markers</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <hr />
+                    Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor </a> and authored
+                    on March 14th, 2014 at 23:26.
+                </section>
+            </section>
+        </section>
+    </footer>
+</div>
+
+</body>
+</html>

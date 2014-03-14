@@ -1,0 +1,168 @@
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/PDO_Helper.php';
+require_once $root . '/../sys/model/Vet.php';		
+require_once $root . '/../sys/model/Pet.php';	
+require_once $root . '/../sys/model/PatientOwner.php';
+require_once $root . '/../sys/model/Picture.php';
+require_once $root . '/../sys/model/Interest.php';
+require_once $root . '/../sys/model/Owner.php';
+require_once $root . '/../sys/model/AchievementRecord.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/controller/PDO_Adapter.php';
+
+// Active assert and make it quiet
+assert_options(ASSERT_ACTIVE, 1);
+assert_options(ASSERT_WARNING, 0);
+assert_options(ASSERT_QUIET_EVAL, 1);
+
+// Assertion Handler
+function assert_handler($file, $line, $code, $desc = null)
+{
+    echo "<hr>Assertion Failed:
+        File '$file'<br />
+        Line '$line'<br />";
+        //Code '$code'<br />"; NOT IMPLEMENTED 
+    if ($desc) {
+        echo "Description: $desc<br /><hr />";
+    }else{
+    	echo "<hr />";
+    }
+    
+    echo "\n";
+}
+// Funtion of create required records in the DB
+function create_test_data($adapter){
+	assert($adapter->executeUpdate("INSERT INTO clinic(clinic_id,clinic_name,clinic_address)". 
+		"VALUES ('1234567890','TEST CLINIC','123 TEST STREET')") == 1,"Failed to insert clinic.");
+}
+
+// Fuction to remove the test data from the DB
+function remove_test_data($adapter){
+	assert($adapter->executeUpdate("DELETE FROM clinic WHERE clinic_id = '1234567890'") == 1,"Failed to insert clinic.");
+}
+
+// Function to run specific subset of tests
+function run_tests(){
+
+}
+function test_getPet($controller){
+
+    $pet = $controller->getPet("123ABC");
+
+    assert($pet->getId() != null, "Failed to get pet(pet id doesn't exist)");
+    assert($pet->getBirthday() != null,"Failed to get pet(birthday doesn't exist)");
+    assert($pet->getName() != null,"Failed to get pet(name doesn't exist)");
+    assert($pet->getSex() != null,"Failed to get pet(sex doesn't exist)");
+    assert($pet->getAge() != null,"Failed to get pet(age doesn't exit)");
+    assert($pet->getColour() != null, "Failed to get pet(colour doesn't exit)");
+    assert($pet->getBreed() != null, "Failed to get pet(breed doesn't exist)");
+    assert($pet->getSpecies() != null, "Failed to get pet(isNeutered doesn't exist)");
+    assert($pet->getNetPoints() != null, "Failed to get pet(netPoints doesn't exist)");
+    assert($pet->getInterestList() != null, "Failed to get pet(InterestList doesn't exist)");
+    assert($pet->getPictureList() != null, "Failed to get pet(PictureList doesn't exist)");
+
+    if($pet->getInterestList() != null ){
+        $interests = $pet->getInterestList();
+        for($i = 0; $i < count($interests); $i++){
+            assert($interests[$i]->getPetId() != null,"Failed to get interest(pet id doesn't exist)");
+            assert($interests[$i]->getInterestId() != null,"Failed to get interest(interest id doesn't exist)");
+            assert($interests[$i]->getInterestName() != null, "Failed to get interest(name doesn't exist)");
+            assert($interests[$i]->getPriority() != null, "Failed to get interest(priority doesn't exist)");
+        }
+    }
+
+    if($pet->getPictureList() != null ){
+        $pictures = $pet->getPictureList();
+        for($i = 0; $i < count($pictures); $i++){
+            assert($pictures[$i]->getPicId() != null,"Failed to get picture(picture id doesn't exist)");
+            assert($pictures[$i]->getPetId() != null,"Failed to get picture(pet id doesn't exist)");
+            assert($pictures[$i]->getPicPath() != null,"Failed to get picture(pic path doesn't exist)");
+            assert($pictures[$i]->getDates() != null,"Failed to get picture(dates doesn't exist)");
+            assert($pictures[$i]->getViews() != null,"Failed to get picture(views doesn't exist)");
+            assert($pictures[$i]->getLikes() != null,"Failed to get picture(likes doesn't exist)");
+            assert($pictures[$i]->getDescription() != null,"Failed to get picture(description doesn't exist)");
+        }
+    }
+}
+
+function test_addPicture($controller){
+    $picId= $controller->addPicture('123ABC','/123ABC/pig.jpg','hahahahahhah');
+    assert( $picId != false ,"Failed to add a picture");
+    return $picId;
+}
+function test_updatePictureDescription($helper,$picId){
+
+    $picture = new Picture();
+    $picture->setPicId($picId);
+    $picture->setPetId('123ABC');
+    $picture->setPicPath('/123ABC/pig.jpg');
+    $picture->setDescription('little dog');
+
+    $picJson = $picture->jsonSerialize();
+
+    assert($helper->updatePictureDescription($picJson) == true,"Failed to update the picture");
+
+}
+
+function test_updatePictureLikes($controller,$picId){
+    assert($controller->updatePictureLikes('123ABC',$picId) == true,"Failed to update the likes");
+}
+
+function test_updatePictureViews($controller,$picId){
+    assert($controller->updatePictureViews('123ABC',$picId) == true,"Failed to update the views");
+}
+
+function test_deletePicture($controller,$picId){
+
+    assert($controller->deletePicture('123ABC',$picId) == true,"Failed to delete the picture");
+
+}
+
+function test_getPictures($controller){
+    assert($controller->getPictures('123ABC') != null,"Failed to get pictures");
+}
+function test_createOwner($controller){
+    assert($controller->createOwner('678abc@gmail.com','678abc','abc','678abc','/usr/picture/678abc') == true, "Failed to create a new owner account");
+}
+function test_getOwnerObject($controller){
+    $owner = $controller->getOwnerObject('123abc@gmail.com');
+    assert($owner != null,'Failed to get the owner object from controller');
+    assert($owner->getEmail() =='123abc@gmail.com','Failed to get email from the owner object');
+    assert($owner->getUsername() == '123abc','Failed to get username from the owner object');
+    assert($owner->getPetList()!= null,'Failed to get pet list from the owner object');
+}
+function test_checkOwnerAccount($controller){
+    $accountArray = $controller->checkOwnerAccount('678abc@gmail.com','');
+    assert($accountArray['pass'] == '678abc',"Failed to get account's password through email");
+    assert($accountArray['salt'] == 'abc',"Failed to get account's salt through email");
+    assert($accountArray['active'] == '1',"Failed to get accoutn's status through email");
+}
+
+// Set up the callback
+assert_options(ASSERT_CALLBACK, 'assert_handler');
+date_default_timezone_set('America/Edmonton');
+//$adapter = new PDOAdapter();
+//create_test_data($adapter);
+//run_tests();
+//remove_test_data($adapter);
+//$adapter->closeConnection();
+$helper = new PDOHelper();
+$controller = new ModelController();
+$picId = test_addPicture($controller);
+test_getPictures($controller);
+test_updatePictureDescription($controller,$picId);
+test_updatePictureLikes($controller,$picId);
+test_updatePictureViews($controller,$picId);
+test_deletePicture($controller,$picId);
+/*
+ * Unable to test getPet method due to unimplemented method:getInterest()
+ *
+ **/
+
+//test_getPet($controller);
+//test_createOwner($controller);
+//test_checkOwnerAccount($controller);
+//test_getOwnerObject($controller);
+?>
+

@@ -1,0 +1,73 @@
+<?php
+
+/**
+ *  Model class for AchievementSet
+ */
+class AchievementSet implements JsonSerializable{
+
+     /**
+     * Achievement Set Name (string)  
+     */
+    private $achievementSetName;.
+    /**
+     * Achievement Set Id (UUID)  
+     */
+    private $achievementSetId;
+    /**
+     * Achievement Set Description (string)
+     */
+    private $description;
+
+    /**
+     * Populate every field in achievement object
+     * @param Array $p_info_array Array with all information on Achievement
+     */
+    public function setInfo($p_info_array) {
+        $this->setName($p_info_array['name']);
+        $this->setId($p_info_array['id']);
+        $this->setDescription($p_info_array['description']);
+    }
+    
+    /**
+     * Getters
+     */
+
+    public function getName() {
+        return $this->achievementSetName;
+    }
+    public function getId() {
+        return $this->achievementSetId;
+    }
+    public function getDescription() {
+        return $this->description;
+    }
+
+    /**
+     * Setters
+     */
+
+    public function setName($p_achievement_name) {
+        $this->achievementSetName = $p_achievement_name;
+    }
+    public function setId($p_achievement_id) {
+        $this->achievementSetId = $p_achievement_id;
+    }
+
+    public function setDescription($p_description) {
+        $this->description = $p_description;
+    }
+
+    /**
+     * Data to be serialized into JSON
+     * @return Array
+     */
+    public function jsonSerialize() {
+        return array(
+            'achievementSetId'   => $this->achievementSetId,
+            'achievementSetName' => $this->achievementSetName,
+            'description'     => $this->description
+        );
+    }
+}
+?>
+

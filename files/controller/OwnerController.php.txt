@@ -1,0 +1,77 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controller for the /Owner route.
+ */
+class OwnerController implements RouteController {
+
+	private $mc;
+	private $app;
+
+	public function __construct() {
+		$this->mc = new ModelController();
+		$this->app = Slim\Slim::getInstance();
+	}
+
+
+	public function index(&$args) {
+		// Not supported.
+	}
+
+	/**
+	 * Handle owner signup/creation.
+	 */
+	public function create(&$args) {
+		$email = $args['email'];
+		$username = $args['username'];
+		$password = $args['password'];
+
+		// Generate salt.  TODO: introduce measure of randomness to salt creation.
+		$salt = time() . $username;
+
+		// TODO: Hack password to be a most 24 characters.
+
+		// Generate password to be stored in the database.
+		$dbpass = hash('sha512', $salt . $password);
+
+		$successfullyCreated = $this->mc->createOwner(
+			$email,
+			$dbpass,
+			$salt,
+			$username,
+			''
+		);
+
+		echo json_encode(array(
+			'successfullyCreated' => $successfullyCreated
+		));
+	}
+
+	public function show(&$args) {
+
+		$ownerId = $args['ownerId'];
+		$returnType = $_SERVER['HTTP_ACCEPT'];
+		if ($returnType == 'text/json') {
+			$owner = $this->mc->getOwnerObject($ownerId);
+			if ($owner != null) {
+				echo json_encode($owner);
+			} else {
+				$this->app->halt(404);
+			}		
+		} else {
+			$this->app->render('pet_owner-tpl.php', array('ownerId' => $ownerId));
+		}
+
+	}
+
+	public function update(&$args) {}
+	public function destroy(&$args) {}
+
+}
+
+?>

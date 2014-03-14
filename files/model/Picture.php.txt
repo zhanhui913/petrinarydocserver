@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * Model class for a Pictures
+ */
+class Picture implements JsonSerializable{
+
+	/**
+	* Picture Id (UUID)
+	*/
+    	private $picId;
+	/**
+	* Pet Id for the picture (UUID)
+	*/
+    	private $petId;
+	/**
+	* Picture Path (string)
+	*/
+    	private $picPath;
+	/**
+	* Datetime of when the picture was posted (UUID)
+	*/
+	private $dates;
+	/**
+	* Number of views the picture has (int)
+	*/
+	private $views;
+	/**
+	* Number of likes the picture has (int)
+	*/
+	private $likes;
+	/**
+	* Description of the picture (string)
+	*/
+	private $description;
+
+	/**
+	*	Populate every field in Picture object
+	*	@param Array $p_info_array Array containing all picture info
+	*/
+	public function setInfo($p_info_array){
+        	$this->setPicId($p_info_array['pic_id']);
+        	$this->setPetId($p_info_array['pet_id']);
+        	$this->setPicPath($p_info_array['pic_path']);
+		$this->setDates($p_info_array['dates']);
+		$this->setViews($p_info_array['views']);
+		$this->setLikes($p_info_array['likes']);
+		$this->setDescription($p_info_array['description']);
+	}
+
+	/**
+	 * Getters 
+	 */
+
+	public function getPicId(){
+		return $this->picId;
+    	}
+    	public function getPetId(){
+        	return $this->petId;
+    	}
+	public function getPicPath(){
+		return $this->picPath;
+	}
+	public function getDates(){
+		return $this->dates;
+	}
+	public function getViews(){
+		return $this->views;
+	}
+	public function getLikes(){
+		return $this->likes;
+	}
+	public function getDescription(){
+		return $this->description;
+	}
+
+
+	/**
+	 * Setters
+	 */
+
+	public function setPicId($p_pic_id){
+		$this->picId = $p_pic_id;
+    	}
+    	public function setPetId($p_pet_id){
+       	 	$this->petId = $p_pet_id;
+   	}
+	public function setPicPath($p_pic_path){
+		$this->picPath = $p_pic_path;
+	}
+	public function setDates($p_dates){
+		$this->dates = $p_dates;
+	}
+	public function setViews($p_views){
+		$this->views = $p_views;
+	}
+	public function setLikes($p_likes){
+		$this->likes = $p_likes;
+	}
+	public function setDescription($p_description){
+		$this->description = $p_description;
+	}
+
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'id'       		=> $this->picId,
+      			'petId'       => $this->petId,
+      			'src'     		=> $this->picPath,
+			'views'       => $this->views,
+			'likes'       => $this->likes,
+			'description' => $this->description,
+		);
+	}
+}
+

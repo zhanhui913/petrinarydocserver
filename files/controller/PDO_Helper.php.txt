@@ -1,0 +1,1363 @@
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/PDO_Adapter.php';
+
+/**
+ * PDO Class that handles qeury building based on input parameters
+ */
+class PDOHelper{
+
+    /**
+     * A instance of PDOAdapter
+     */
+    private $adapter;
+
+    /**
+     * On construction create a new PDOAdapter
+     */
+    public function __construct() {
+        $this->adapter = new PDOAdapter();
+    }
+
+
+    /**************************************************************************
+    *
+    *    UUID Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Generates a v4 UUID
+     * @return String a v4 UUID
+     */
+    public static function v4(){
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+ 
+        // 32 bits for "time_low"
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+ 
+        // 16 bits for "time_mid"
+        mt_rand(0, 0xffff),
+ 
+        // 16 bits for "time_hi_and_version",
+        // four most significant bits holds version number 4
+        mt_rand(0, 0x0fff) | 0x4000,
+ 
+        // 16 bits, 8 bits for "clk_seq_hi_res",
+        // 8 bits for "clk_seq_low",
+        // two most significant bits holds zero and one for variant DCE1.1
+        mt_rand(0, 0x3fff) | 0x8000,
+ 
+        // 48 bits for "node"
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+    }
+
+    /**************************************************************************
+    *
+    *    Admin Methods
+    *
+    /**************************************************************************/
+    
+    /** 
+     * Checks if the provided admin email is valid.
+     * @param String $p_email Admin email address
+     * @return Array $result Returns email, password & salt if valid, else null
+     */
+    public function checkAdminLogin($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT pass,salt ".
+            "FROM ADMIN ".
+            "WHERE email=?;");
+
+        $stmt->bindParam(1,$p_email);
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**************************************************************************
+    *
+    *    Vet Methods
+    *
+    /**************************************************************************/
+
+   /** 
+    * @deprecated
+    * Checks if the provided vet email is valid.
+    * @param String $p_email Vet email address
+    * @return Array $result Returns email, password & salt if valid, else null
+    */
+    public function checkVetEmail($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT email,pass,salt ".
+            "FROM VET ".
+            "WHERE email=?;");
+        $stmt->bindParam(1,$p_email);
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * @deprecated
+     * Uses the PDO_Adapter to get the info for a specific vet by email.
+     * @param String $p_email Vet email address
+     * @return Array $result
+     */
+    public function getVetInfoQuery($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * FROM VETS WHERE email=?");
+        $stmt->bindParam(1,$p_email);
+       
+        $result = null;
+        try{
+              $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**************************************************************************
+    *
+    *    Owner Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * This function checks if the given owner email or owner useranme is valid
+     * @param String $p_id Can be either email or username
+     * @return Array $result Returns email,passowrd,salt,username and active status           
+     */
+    public function checkOwnerId($p_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT pass,salt,active ".
+            "FROM OWNER ".
+            "WHERE email=? OR username=?;");
+        $stmt->bindParam(1,$p_id);
+        $stmt->bindParam(2,$p_id);
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Create a new owner through PDO_Adpater.
+     * THE RETURN VALUES NEED TO BE REFACTORED
+     * @param String $p_email Owner's email
+     * @param String $p_password Owner's password
+     * @param String $p_salt Salt
+     * @param String $p_username Owner's username
+     * @param String $p_picPath The path of default profile picture
+     * @return boolean $result Returns true when the owner is created successfully,else false
+     */
+    public function createOwner($p_email,$p_password,$p_salt,$p_username,$p_picPath){
+        $stmt = $this->adapter->conn->prepare(
+                "INSERT INTO OWNER(".
+                "email,pass,salt,username,pic_path) ".
+                "VALUES".
+                "(?,".
+                "?,".
+                "?,".
+                "?,".
+                "?);");
+        $stmt->bindParam(1,$p_email);
+        $stmt->bindParam(2,$p_password);
+        $stmt->bindParam(3,$p_salt);
+        $stmt->bindParam(4,$p_username);
+        $stmt->bindParam(5,$p_picPath);
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the email and username for a specific owner by email
+     * @param String $p_email email
+     * @return Array $result returns an array with email and username, null otherwise
+     */
+    public function getOwnerInfo($p_email){
+
+        $stmt = $this->adapter->conn->prepare(
+                "SELECT email,username,pic_path,active ".
+                "FROM OWNER ".
+                "WHERE email=?;");
+        $stmt->bindParam(1,$p_email);
+        $result=null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * Get the email and username for a specific owner by email/username
+     * @param String $p_id Username The username/email of the owner.
+     * @return Array $return Returns an array with email and username , null otherwise
+     */
+    public function getOwnerById($p_id){
+
+        $stmt = $this->adapter->conn->prepare(
+                "SELECT email,username,pic_path,active ".
+                "FROM OWNER ".
+                "WHERE email=? OR username=?;");
+        $stmt->bindParam(1,$p_id);
+        $stmt->bindParam(2,$p_id);
+        $result=null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+        return $result;
+    }
+    
+    /**
+     * Update the password for a specific pet owner by email.
+     * @param String $p_email Owner email
+     * @param String $p_password Owner's new password
+     * @param String $p_salt Owner's salt
+     * @return boolean $result Returns true when is updated successfully, false otherwise.
+     */
+    public function updateOwnerPassword($p_email,$p_password,$p_salt){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE OWNER ".
+            "SET pass = ?,salt = ? ".
+            "WHERE email = ?;");
+        $stmt->bindParam(1,$p_password);
+        $stmt->bindParam(2,$p_salt);
+        $stmt->bindParam(3,$p_email);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+    
+    /**
+     * Update the username for a specific pet owner by email.
+     * @param String $p_email Owner email
+     * @param String $p_username Owner username
+     * @return boolean $result Returns true when is updated successfully, false otherwise.
+     */
+    public function updateOwnerUsername($p_email,$p_username){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE OWNER ".
+            "SET username = ? ".
+            "WHERE email = ?;");
+        $stmt->bindParam(1,$p_username);
+        $stmt->bindParam(2,$p_email);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    /**
+     * Update the account status for a specific pet owner by email.
+     * @param String $p_email Owner email.
+     * @param boolean $p_active Owner's active status. 
+     * @return boolean $result Returns true when is updated successfully, false otherwise.
+     */
+    public function updateOwnerActiveStatus($p_email,$p_active){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE OWNER ".
+            "SET active = ? ".
+            "WHERE email = ?;");
+        $stmt->bindParam(1,$p_active);
+        $stmt->bindParam(2,$p_email);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+
+    }
+ 
+   /**************************************************************************
+    *
+    *    Pet Methods
+    *
+    /**************************************************************************/
+    
+    /** 
+     * Uses the PDO_Adapter to get the info for a specific 
+     * pet by pet id.
+     * @param String $p_pet_id Pet id
+     * @return Array $result Returns an array of pet info, null otherwise.
+     */
+    public function getPetInfoQuery($p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM PET ".
+            "WHERE pet_id = ?;");
+        $stmt->bindParam(1,$p_pet_id);
+
+        $result = null;
+        try{
+             $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /** 
+     * Get all the pet id for a specific owner.
+     * @param String $p_email Owner email
+     * @return Array $result Returns an array of pet id, null otherwise.
+     */
+    public function getAllPetId($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT pet_id ".
+            "FROM PET ".
+            "WHERE owner_id = ?;");
+        $stmt->bindParam(1,$p_email);
+        
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * Update a pet by using pet id and an array of pet details.
+     * @param String $p_petId Pet id
+     * @param Array $p_pet An array of pet details
+     * @return boolean $result Returns true when is updated successfully, false otherwise.
+     */
+    public function updatePet($p_petId,$p_pet) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PET SET ".
+            "name = ?, ".
+            "birthday = ?, ".
+            "sex = ?, ".
+            "age = ?, ".
+            "colour = ?, ".
+            "breed = ?, ".
+            "species = ?, ".
+            "isNeutered = ? ".
+            "WHERE pet_id = ?;");
+        $stmt->bindParam(1,$p_pet['name']);
+        $stmt->bindParam(2,$p_pet['birthday']);
+        $stmt->bindParam(3,$p_pet['sex']);
+        $stmt->bindParam(4,$p_pet['age']);
+        $stmt->bindParam(5,$p_pet['colour']);
+        $stmt->bindParam(6,$p_pet['breed']);
+        $stmt->bindParam(7,$p_pet['species']);
+        $stmt->bindParam(8,$p_pet['isNeutered']);
+        $stmt->bindParam(9,$p_petId);
+
+        $result = null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Create pet with name, pet id, owner id, sex, age, colour, breed, species, 
+     * isNeutred and net points information 
+     * @param Array $p_pet Pet details
+     * @return boolean $result Returns true if inserted, false otherwise
+     */
+    public function addPet($p_pet) {
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO PET VALUES(".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_pet['name']);
+        $stmt->bindParam(2,$p_pet['pet_id']);
+        $stmt->bindParam(3,$p_pet['owner_id']);
+        $stmt->bindParam(4,$p_pet['birthday']);
+        $stmt->bindParam(5,$p_pet['sex']);
+        $stmt->bindParam(6,$p_pet['age']);
+        $stmt->bindParam(7,$p_pet['colour']);
+        $stmt->bindParam(8,$p_pet['breed']);
+        $stmt->bindParam(9,$p_pet['species']);
+        $stmt->bindParam(10,$p_pet['isNeutered']);
+        $stmt->bindParam(11,$p_pet['net_points']);
+
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        if($result > 0) {
+            return $p_pet['pet_id'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Delete a pet from an owner's account by using email and pet id.
+     * @param String $p_email Owner email
+     * @param Stirngs $p_petId Pet id
+     * @return boolean Returns true if is deleted successfully,else false
+     */
+    public function deletePet($p_email,$p_petId){
+        $stmt =  $this->adapter->conn->prepare(
+            "DELETE FROM PET ".
+            "WHERE owner_id = ? AND pet_id = ?;"
+        );
+            
+        $stmt->bindParam(1,$p_email);
+        $stmt->bindParam(2,$p_petId);
+
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**************************************************************************
+    *
+    *    Interest Records Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Returns all interest records based on pet id.
+     * @param String $p_pet_id Pet id
+     * @return Array $result Returns an array of interest records based on pet id
+     */
+    public function getInterestRecord($p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM INTEREST_RECORD ".
+            "WHERE pet_id=?;");
+        $stmt->bindParam(1,$p_pet_id); 
+        $result = null;
+
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;   
+    }
+
+    /** 
+    * Use given pet id and interest id to add a interest record.
+    * @param String $p_pet_id Pet id
+    * @param Integer $p_interest_id Interest id
+    * @return String $result Concatenation of both parametersif successfully inserted, null otherwise  
+    */
+    public function addInterestRecord($p_pet_id,$p_interest_id){
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO INTEREST_RECORD VALUES(".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_pet_id);
+        $stmt->bindParam(2,$p_interest_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+
+        if($result > 0) {
+            return $p_pet_id."_".$p_interest_id;
+        }
+
+        return null;    
+    }
+        
+    /**
+     * Delete a interest record based on pet id and pet interest id
+     * @param String $p_pet_id Pet id
+     * @param String $p_interest_id Interest id
+     * @return Boolean $result Returns true if successful, false otherwise
+     */
+    public function deleteInterestRecord($p_pet_id,$p_interest_id){
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM INTEREST_RECORD WHERE ".
+            "pet_id = ? ".
+            "AND ".
+            "interest_id = ?;");
+        $stmt->bindParam(1,$p_pet_id);
+        $stmt->bindParam(2,$p_interest_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+
+        if($result > 0){
+            return true;
+        }
+
+        return false;
+    }
+
+    /**************************************************************************
+    *
+    *    Interest Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get all interest objects
+     * @return Array $result Array of Interest Model Objects
+     */
+    public function getAllInterest(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT I.interest_id, I.interest_description, I.src,I.category_id, C.description ".
+            "FROM INTEREST I left join CATEGORY C ".
+            "ON I.category_id = C.category_id;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * Get a specific interest object
+     * @param String $p_interest_id The Interest ID
+     * @return Interest $result Interest Model Object
+     */
+    public function getInterest($p_interest_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT I.interest_id, I.interest_description, I.src,I.category_id, C.description ".
+            "FROM INTEREST I left join CATEGORY C ".
+            "ON I.category_id = C.category_id ".
+            "WHERE I.interest_id=?;");
+        $stmt->bindParam(1,$p_interest_id);
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;    
+        }
+        return $result[0];
+    }
+
+    /**
+     * Adds an interest into the db
+     * @param String $p_interest_name The Interest description
+     * @param String $p_category_id The category ID
+     * @param String $p_interest_src Path to location at which the image associated with this interest is stored.
+     * @return String $uuid Returns a UUID if successful, else returns null
+     */
+    public function addInterest($p_interest_name,$p_category_id,$p_interest_src){
+        $uuid = $this->v4();
+        
+        $stmt = $this->adapter->conn->prepare(
+        "INSERT INTO INTEREST(interest_description,category_id,src,interest_id) ".
+        "VALUES( ".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_interest_name);
+        $stmt->bindParam(2,$p_category_id);
+        $stmt->bindParam(3,$p_interest_src);
+        $stmt->bindParam(4,$uuid);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        //If successfully inserted, return the UUID, else return null
+        if($result > 0) {
+            return $uuid;
+        }
+        return null;  
+    }
+
+    /**
+     * Deletes an interest from the database
+     * @param String $p_interest_id The interest ID
+     * @return boolean $result Returns true if deleted successfully, false otherwise
+     */
+    public function deleteInterest($p_interest_id){
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM INTEREST WHERE ".
+            "interest_id = ?;");
+        $stmt->bindParam(1,$p_interest_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update an interest description
+     * @param String $p_interest_id The interest ID
+     * @param String $p_interest_description Interest description
+     * @return boolean $result Returns true if deleted successfully, false otherwise
+     */
+    public function editInterestDescription($p_interest_id,$p_interest_description){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE INTEREST SET INTEREST_DESCRIPTION=? ".
+            "WHERE INTEREST_ID = ?");
+        $stmt->bindParam(1,$p_interest_description);
+        $stmt->bindParam(2,$p_interest_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update an interest src
+     * @param String $p_interest_id The interest ID
+     * @param String $p_interest_src The interest Src
+     * @return boolean $result Returns true if updated successfully, false otherwise
+     */
+    public function editInterestSrc($p_interest_id,$p_interest_src){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE INTEREST SET SRC=? ".
+            "WHERE INTEREST_ID = ?");
+        $stmt->bindParam(1,$p_interest_src);
+        $stmt->bindParam(2,$p_interest_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update an interest category
+     * @param int $p_interest_id The interest ID
+     * @param String $p_interest_category Name of the interest category
+     * @return boolean $result Returns true if updated successfully, false otherwise
+     */
+    public function editInterestCategory($p_interest_id,$p_interest_category){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE INTEREST SET CATEGORY_ID=? ".
+            "WHERE INTEREST_ID = ?");
+        $stmt->bindParam(1,$p_interest_category);
+        $stmt->bindParam(2,$p_interest_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            echo "00000";
+            return false;
+        }
+
+        if($result > 0){
+            return true;
+        }
+        return false;
+
+    }
+
+    /**************************************************************************
+    *
+    *    Category Methods
+    *
+    /**************************************************************************/
+    
+    /**
+     * Get all category objects
+     * @return Array[Category] $result Array of Category Model Objects
+     */
+    public function getAllCategory(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM CATEGORY;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * sGet a specific category object
+     * @param String $p_category_id The Category ID
+     * @return Category $result Category Model Object
+     */
+    public function getCategory($p_category_id){
+        $stmt = $this->adapter->conn->prepare(
+        "SELECT * ".
+        "FROM CATEGORY ".
+        "WHERE category_id=?;");
+        $stmt->bindParam(1,$p_category_id,PDO::PARAM_INT);
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+            if (!isset($result[0])) {
+                return null;
+            }
+        }catch(PDOException $e){
+            return null;    
+        }
+
+        return $result[0];
+    }
+
+    /**
+     * Adds a category into the db
+     * @param String $p_category_description The category description
+     * @return String $uuid Returns a UUID if successful, else returns null
+     */
+    public function addCategory($p_category_description){
+	    $uuid = $this->v4();
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO CATEGORY(description,category_id) VALUES(?,?);");
+        $stmt->bindParam(1,$p_category_description);
+        $stmt->bindParam(2,$uuid);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+
+        //If successfully inserted, return UUID, else return null
+        if($result > 0) {
+            return $uuid;
+        }else{
+            return null; 
+        }
+    }
+
+    /**
+     * Deletes a category from the db
+     * @param int $p_category_id The category ID
+     * @return Boolean $result Returns true if deleted successfully, false otherwise
+     */
+    public function deleteCategory($p_category_id){
+         $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM CATEGORY WHERE ".
+            "category_id = ?;");
+        $stmt->bindParam(1,$p_category_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+
+        if($result > 0){
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**************************************************************************
+    *
+    *    Picture Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get all picture info based on pet ID
+     * @param String $p_pet_id Pet ID
+     * @return Array $result Returns an Array of pictures based on pet ID
+     */
+    public function getAllPictureInfo($p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM PICTURES ".
+            "WHERE pet_id=?;");
+        $stmt->bindParam(1,$p_pet_id);
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result; 
+    }
+
+    /**
+     * Insert a picture's info into the database
+     * @param String $p_pet_id The pet ID
+     * @param String $p_path The picture path
+     * @param String $p_description The description of the picture
+     * @return String $pic_id Returns picture ID if added successfully, else null
+     */
+    public function addPicture($p_pet_id,$p_path,$p_description){
+        $time = time();
+
+        //Concat time witht pet ID = pic ID
+        $pic_id = $p_pet_id."_".$time;
+
+        //Insert into db
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO PICTURES".
+            "(pet_id,pic_path,description,pic_id) ".
+            "VALUES(".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+        
+        $stmt->bindParam(1,$p_pet_id);
+        $stmt->bindParam(2,$p_path);
+        $stmt->bindParam(3,$p_description);
+        $stmt->bindParam(4,$pic_id);
+
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+
+        return $pic_id;
+    }
+
+    /** 
+     * Update picture description with information if the picture is found
+     * @param Array $p_picture Picture details
+     * @return boolean $result Returns true if updated successfully, else false
+     */
+    public function updatePictureDescription($p_picture){
+
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PICTURES ".
+            "SET description = ? ".
+            "WHERE pet_id = ? ".
+            "AND ".
+            "pic_id = ?;");
+        $stmt->bindParam(1,$p_picture['description']);
+        $stmt->bindParam(2,$p_picture['petId']);
+        $stmt->bindParam(3,$p_picture['picId']);
+
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Delete a picture through pet ID and picture ID
+     * @param String $p_petId Pet ID
+     * @param String $p_picId Picture ID
+     * @return boolean $result Returns true if updated, false otherwise
+     */
+    public function deletePicture($p_petId,$p_picId){
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM PICTURES ".
+            "WHERE pet_id = ? ".
+            "AND ".
+            "pic_id = ?;");
+        $stmt->bindParam(1,$p_petId);
+        $stmt->bindParam(2,$p_picId);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Increment the likes count for a picture
+     * @param String $p_pet_id Pet ID
+     * @param String $p_pic_id Pic ID
+     * @return boolean $result Returns true or false depending on success
+     */
+    public function updatePictureLikes($p_pet_id, $p_pic_id) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PICTURES SET likes = likes + 1 ".  
+            "WHERE pic_id=? and pet_id=?");
+        $stmt->bindParam(1,$p_pic_id);
+        $stmt->bindParam(2,$p_pet_id);
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+     /**
+      * Increment the views count for a picture
+      * @param  String $p_pet_id Pet ID
+      * @param  String $p_pic_id Pic ID
+      * @return boolean True or False depending on success
+      */
+    public function updatePictureViews($p_pet_id, $p_pic_id) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PICTURES SET views = views + 1 ".  
+            "WHERE pic_id=? and pet_id=?");
+        $stmt->bindParam(1,$p_pic_id);
+        $stmt->bindParam(2,$p_pet_id);
+
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**************************************************************************
+    *
+    *    Clinic Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get all the clinic information from DB
+     * @return Array $result List of clinic details
+     */
+    public function getAllClinicInfo(){
+        $stmt = $this->adapter->conn->prepare("SELECT * FROM CLINIC");  
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * Update clinic info
+     * @param Object $p_clinic A clinic object
+     * @return Boolean $result Returns true if successful, false otherwise
+     */
+    public function updateClinicInfo($p_clinic){ 
+
+        $stmt = $this->adapter->conn->prepare("UPDATE CLINIC SET ".
+        "clinic_name = ?, " . 
+        "clinic_addr = ?, " .
+        "post_code = ?, " .
+        "latitude = ?, " .
+        "longtitude = ?, " .
+        "province = ?, " .
+        "city = ?, " .
+        "email = ?, " .
+        "website = ?, " .
+        "contact_person = ?, ".
+        "active = ?, " .
+        "expiration = ?, " .
+        "pass = ?, " .
+        "salt = ?, " .
+        "WHERE clinic_id = ?;");
+
+        $stmt->bindParam(1,$p_clinic->getClinicName());
+        $stmt->bindParam(2,$p_clinic->getClinicAddress());
+        $stmt->bindParam(3,$p_clinic->getPostCode());
+        $stmt->bindParam(4,$p_clinic->getLatitude());
+        $stmt->bindParam(5,$p_clinic->getLongtitude());
+        $stmt->bindParam(6,$p_clinic->getProvince());
+        $stmt->bindParam(7,$p_clinic->getCity());
+        $stmt->bindParam(8,$p_clinic->getEmail());
+        $stmt->bindParam(9,$p_clinic->getWebsite());
+        $stmt->bindParam(10,$p_clinic->getContactPerson());
+        $stmt->bindParam(11,$p_clinic->getActiveStatus());
+        $stmt->bindParam(12,$p_clinic->getExpirationDate());
+        $stmt->bindParam(13,$p_clinic->getClinicId());
+        $stmt->bindParam(14,$p_clinic->getPass());
+        $stmt->bindParam(15,$p_clinic->getSalt());
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    /**
+     * This function checks if the given clinic email is valid
+     * @param String $p_email clinic email
+     * @return Array Returns active,password and salt           
+     */
+    public function checkClinicAccount($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT pass,salt, active ".
+            "FROM CLINIC ".
+            "WHERE email=?;");
+        $stmt->bindParam(1,$p_email);
+        $result = null;
+        try{
+			$ret = $this->adapter->executeFetchPrepared($stmt);
+			if (!isset($ret[0])) return null;
+			else $result = $ret[0];
+        }catch(PDOException $e) {
+            return null;
+        }catch(ErrorException $e) {
+            return null;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Create a new clinic through PDO_Adpater
+     * @param Array $p_clinic_array An array of clinic details
+     * @return String $result Returns clinic id if is inserted successfully,else false
+     */
+    public function createClinic($p_clinic_array){
+    	$id = $this->v4();
+        $stmt = $this->adapter->conn->prepare("INSERT INTO CLINIC (".
+        "name, " . 
+        "clinic_id, " .
+        "address, " .
+        "city, " .
+        "province, " .
+        "latitude, " .
+        "longtitude, " .
+        "email, " .
+        "website, " .
+        "contact_person, ".
+        "phone , " .
+        "active, " .
+        "expiration, " .
+        "pass, " .
+        "salt) " .
+        " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" .
+        ";");
+        $stmt->bindParam(1,$p_clinic_array['name']);
+        $stmt->bindParam(2,$id);
+        $stmt->bindParam(3,$p_clinic_array['address']);
+        $stmt->bindParam(4,$p_clinic_array['city']);
+        $stmt->bindParam(5,$p_clinic_array['province']);
+        $stmt->bindParam(6,$p_clinic_array['latitude']);
+        $stmt->bindParam(7,$p_clinic_array['longtitude']);
+        $stmt->bindParam(8,$p_clinic_array['email']);
+        $stmt->bindParam(9,$p_clinic_array['website']);
+        $stmt->bindParam(10,$p_clinic_array['contact_person']);
+        $stmt->bindParam(11,$p_clinic_array['phone']);
+        $stmt->bindParam(12,$p_clinic_array['active']);
+        $stmt->bindParam(13,$p_clinic_array['expiration']);
+        $stmt->bindParam(14,$p_clinic_array['pass']);
+        $stmt->bindParam(15,$p_clinic_array['salt']);
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        if($result > 0) {
+            return $id;
+        }
+
+        return null;
+    }
+
+    /**************************************************************************
+    *
+    *    Old Pet Owner Methods
+    *
+    /**************************************************************************/
+
+    /** 
+     * @deprecated
+     * Update patient owner with information if clinic_id and patient_id is found
+     * @param Array $p_patient_owner Patient owner details
+     * @return boolean Returns true if updated, false otherwise
+     */
+    public function updatePatientOwner($p_patient_owner) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PATIENT_OWNER SET ".
+            "firstname = ?,".
+            "lastname = ?,".
+            "address = ?,".
+            "city = ?,".
+            "province = ?,".
+            "postal_code = ?,".
+            "home_number = ?,".
+            "cell_number = ?,".
+            "email = ?,".
+            "hasOptedIn = ? ".
+            "WHERE clinic_id=? and patient_id = ? and owner_id = ?;");
+        $stmt->bindParam(1,$p_patient_owner['firstname']);
+        $stmt->bindParam(2,$p_patient_owner['lastname']);
+        $stmt->bindParam(3,$p_patient_owner['address']);
+        $stmt->bindParam(4,$p_patient_owner['city']);
+        $stmt->bindParam(5,$p_patient_owner['province']);
+        $stmt->bindParam(6,$p_patient_owner['postal_code']);
+        $stmt->bindParam(7,$p_patient_owner['home_number']);
+        $stmt->bindParam(8,$p_patient_owner['cell_number']);
+        $stmt->bindParam(9,$p_patient_owner['email']);
+        $stmt->bindParam(10,$p_patient_owner['hasOptedIn']);
+        $stmt->bindParam(11,$p_patient_owner['clinic_id']);
+        $stmt->bindParam(12,$p_patient_owner['patient_id']);
+        $stmt->bindParam(13,$p_patient_owner['owner_id']);
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+    /**************************************************************************
+    *
+    *    Achievement Set Methods
+    *
+    /**************************************************************************/
+
+    /** 
+     * Get a achievement set based on achievement ID
+     * @param String $p_achievement_id The achievement ID
+     * @return Array $result Returns the achievement ID ,else null
+     */
+    public function getAchievementSet($p_achievement_id){
+        $stmt = $this->adapter->conn->prepare("SELECT * ".
+            "FROM ACHIEVEMENT_SET ".
+            "WHERE id=?;");
+        $stmt->bindParam(1,$p_achievement_id);
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result[0];
+    }
+
+    /** 
+     * Get a list of all the achievement sets
+     * @return Array $result Returns an array of achievement ID,else null
+     */
+    public function getAllAchievementSet(){
+        $stmt = $this->adapter->conn->prepare("SELECT * ".
+            "FROM ACHIEVEMENT_SET ;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**************************************************************************
+    *
+    *    Achievement Methods
+    *
+    /**************************************************************************/
+
+    /** 
+     * Check the achievement id if it exists
+     * @param String $p_achievement_id The Achievement ID
+     * @return Array $result achievement Id if exists, else null
+     */
+    public function checkAchievementId($p_achievement_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT achievement_id ".
+            "FROM ACHIEVEMENT ".
+            "WHERE achievement_id = ?;");
+        $stmt->bindParam(1,$p_achievement_id);
+        $result = $this->adapter->executeFetchPrepared($stmt);
+        return $result;
+    }
+
+    /** 
+     * Get all the achievement records based on achievement ID and pet ID
+     * @param String $p_achievement_id Achievement ID
+     * @param String $p_pet_id Pet ID
+     * @return Array $result Returns all the achievement records, else null
+     */
+    public function getAchievementRecordInfo($p_achievement_id, $p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT A.* , B.achievement_name, B.description". 
+            " FROM ACHIEVEMENT_RECORD A join ACHIEVEMENT B on A.achievement_id = B.achievement_id".
+            " WHERE A.achievement_id = ? and A.pet_id = ?;");
+
+        $stmt->bindParam(1,$p_achievement_id);
+        $stmt->bindParam(2,$p_pet_id);
+        try{
+             $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /** 
+     * @deprecated
+     * Adding a new achievement template
+     * @param String $p_name Name of the achievement
+     * @param int $p_points The number of points it carries
+     * @param String $p_description The description
+     * @return boolean $result Returns true if successful, false otherwise
+     */
+    public function addAchievementTemplate($p_name, $p_points, $p_description){
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO ACHIEVEMENT VALUES(".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_name);
+        $stmt->bindParam(2,$p_points);
+        $stmt->bindParam(3,$p_description);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }else{
+            return false;    
+        }
+    }
+
+    /**
+     * Adding a new achievement to a pet
+     * @param int $p_achievement_id The specific achievement
+     * @param String $p_pet_id The pet that achieved it
+     * @param String $p_vet_id The vet (if any) that is associated with the achievement
+     * @param int $p_points The number of points the achievement carries
+     * @return boolean $result Returns true if added successfully,else false
+     */
+    public function addAchievementRecord($p_achievement_id,$p_pet_id,$p_vet_id,$p_points){
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO ACHIEVEMENT_RECORD(achievement_id,pet_id,vet_id,points)".
+            "VALUES(".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_achievement_id);
+        $stmt->bindParam(2,$p_pet_id);
+        $stmt->bindParam(3,$p_vet_id);
+        $stmt->bindParam(4,$p_points);
+
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }else{
+            return false;    
+        }
+    }
+
+
+}
+?>
+

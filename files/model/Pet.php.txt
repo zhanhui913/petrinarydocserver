@@ -1,0 +1,194 @@
+<?php
+require_once 'InterestRecord.php';
+require_once 'Picture.php';
+
+/**
+ * Model class for a Pet
+ */
+class Pet implements JsonSerializable{
+
+	/**
+	* Pet Name (string)
+	*/
+	private $petName;
+	/**
+	* Owner Id of the pet (UUID)
+	*/
+	private $ownerId;
+	/**
+	* Pet Id (php unique id)
+	*/
+	private $petId;
+	/**
+	* Datetime for pet birthday
+	*/
+	private $birthday; 
+	/**
+	* Pet Sex (string)
+	*/
+	private $sex;
+	/**
+	* Pet Age (int)
+	*/
+	private $age;
+	/**
+	* Pet Colour (string)
+	*/
+	private $colour;
+	/**
+	* Pet Breed (string)
+	*/
+	private $breed;
+	/**
+	* Pet Species (string)
+	*/
+	private $species;
+	/**
+	* Pets Neutered Status (boolean)
+	*/
+	private $isNeutered;
+	/**
+	* Net points accumulated by a Pet
+	*/
+	private $netPoints;
+	/**
+	* Array of Interest objects containing all the pets interests
+	*/
+	private $interestList = array(); //Array of interest objects
+	/**
+	* Array of picture objects containing pictures for the pet
+	*/
+	private $pictureList = array();  //Array of picture objects
+
+	/**
+	*	Populate every field in Pet object
+	*	@param Array $p_info_array Array containing all pet info
+	*	@param Array[Picture Object] $p_picture_list Array of picture objects
+	*	@param Array[Interest Object] $p_interest_list Array of interest objects
+	*/
+	public function setInfo($p_info_array,$p_picture_list,$p_interest_list){
+		$this->setName($p_info_array['name']);
+    		$this->setPetId($p_info_array['pet_id']);
+    		$this->setOwnerId($p_info_array['owner_id']);
+    		$this->setBirthday($p_info_array['birthday']);
+		$this->setSex($p_info_array['sex']);
+		$this->setAge($p_info_array['age']);
+		$this->setColour($p_info_array['colour']);
+		$this->setBreed($p_info_array['breed']);
+		$this->setSpecies($p_info_array['species']);
+		$this->setIsNeutered($p_info_array['isNeutered']);
+    		$this->setNetPoints($p_info_array['net_points']);
+    		$this->setInterestList($p_interest_list);
+    		$this->setPictureList($p_picture_list);
+	}
+
+	/**
+	 * Getters
+	 */
+
+	public function getPetId(){
+		return $this->petId;
+	  }
+	public function getOwnerId(){
+	    return $this->ownerId;
+	  }
+	public function getBirthday(){
+	    return $this->birthday;
+	  }
+	public function getName(){
+		return $this->petName;
+	}
+	public function getSex(){
+		return $this->sex;
+	}
+	public function getAge(){
+		return $this->age;
+	}
+	public function getColour(){
+		return $this->colour;
+	}
+	public function getBreed(){
+		return $this->breed;
+	}
+	public function getSpecies(){
+		return $this->species;
+	}
+	public function getIsNeutered(){
+		return $this->isNeutered;
+	}
+	public function getNetPoints(){
+		return $this->netPoints;
+  	}
+  	public function getInterestList(){
+ 	 	return $this->interestList;
+ 	 }
+ 	public function getPictureList(){
+  		return $this->pictureList;
+  	}
+
+	/**
+	 * Setters
+	 */
+
+	public function setPetId($p_pet_id){
+		$this->petId = $p_pet_id;
+    	}
+   	public function setOwnerId($p_owner_id){
+        	$this->ownerId = $p_owner_id;
+    	}
+ 	public function setBirthday($p_birthday){
+        	$this->birthday = $p_birthday;
+    	}
+	public function setName($p_pet_name){
+		$this->petName = $p_pet_name;
+	}
+	public function setSex($p_sex){
+		$this->sex = $p_sex;
+	}
+	public function setAge($p_age){
+		$this->age = $p_age;
+	}
+	public function setColour($p_colour){
+		$this->colour = $p_colour;
+	}
+	public function setBreed($p_breed){
+		$this->breed = $p_breed;
+	}
+	public function setSpecies($p_species){
+		$this->species = $p_species;
+	}
+	public function setIsNeutered($p_isNeutered){
+		$this->isNeutered = $p_isNeutered;
+    	}
+	public function setNetPoints($p_net_points){
+  	       $this->netPoints = $p_net_points;
+ 	}
+	public function setInterestList($p_interest_list){
+	 	$this->interestList = $p_interest_list;
+    	}
+    	public function setPictureList($p_picture_list){
+    		$this->pictureList = $p_picture_list;
+    	}
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'id'        => $this->petId,
+      			'name'      => $this->petName,
+      			'dob'       => $this->birthday,
+			'sex'       => $this->sex,
+			'age'       => $this->age,
+			'colour'    => $this->colour,
+			'breed'     => $this->breed,
+			'species'   => $this->species,
+      			'ns'        => $this->isNeutered,
+      			'points'    => $this->netPoints,
+      			'interests' => $this->interestList,
+      			'pictures'  => $this->pictureList
+		);
+	}
+}
+

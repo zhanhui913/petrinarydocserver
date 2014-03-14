@@ -1,0 +1,189 @@
+<?php
+
+/**
+ * @deprecated
+ * Model class for a Vet
+ */
+class Vet implements JsonSerializable {
+	
+	/**
+	* @deprecated
+	*/
+	private $clinicId;
+	/**
+	* @deprecated
+	*/
+	private $vetId;
+	/**
+	* @deprecated
+	*/
+	private $firstName;
+	/**
+	* @deprecated
+	*/
+	private $lastName;
+	/**
+	* @deprecated
+	*/
+	private $email;
+	/**
+	* @deprecated
+	*/
+	private $pass;
+	/**
+	* @deprecated
+	*/
+	private $salt;
+	/**
+	* @deprecated
+	*/
+	private $address; //Do vets need an address??
+	/**
+	* @deprecated
+	*/
+	private $phone;
+	/**
+	* @deprecated
+	*/
+	private $postalCode;
+	/**
+	* @deprecated
+	*/
+	private $city;
+	/**
+	* @deprecated
+	*/
+	private $province;
+	/**
+	* @deprecated
+	*/
+	private $active;
+
+	/**
+	*	Populate every field in Vet object
+	* @param [Array] $p_info_array [Array with all information on Vet]
+	*/
+	public function setInfo($p_info_array){
+		$this->setClinicId($result['clinic_id']);
+		$this->setVetId($result['vet_id']);
+		$this->setFirstName($result['first_name']);
+		$this->setLastName($result['last_name']);
+		$this->setEmail($result['email']);
+		$this->setPass($result['pass']);
+		$this->setSalt($result['salt']);
+		$this->setAddress($result['address']);
+		$this->setPhone($result['phone']);
+		$this->setPostal($result['postal_code']);
+		$this->setCity($result['city']);
+        	$this->setProvince($result['province']);
+        	$this->setActive($result['active']);
+	}
+
+	/**
+	* 	Getters
+	*/
+
+	public function getClinicId(){
+		return $this->clinicId;
+	}
+	public function getVetId(){
+		return $this->vetId;
+	}
+	public function getFirstName(){
+		return $this->firstName;
+	}
+	public function getLastName(){
+		return $this->lastName;
+	}
+	public function getEmail(){
+		return $this->email;
+	}
+	public function getPass(){
+		return $this->pass;
+	}
+	public function getSalt(){
+		return $this->salt;
+	}
+	public function getAddress(){
+		return $this->address;
+	}
+	public function getPhone(){
+		return $this->phone;
+	}
+	public function getPostal(){
+		return $this->postalCode;
+	}
+	public function getCity(){
+		return $this->city;
+	}
+	public function getProvince(){
+		return $this->province;
+	}
+    	public function getActive(){
+        	return $this->active;
+    	}
+
+	/**
+	* 	Setters
+	*/
+
+	public function setClinicId($p_clinic_id){
+		$this->clinicId = $p_clinic_id;
+	}
+	public function setVetId($p_vet_id){
+		$this->vetId = $p_vet_id;
+	}
+	public function setFirstName($p_first_name){
+		$this->firstName = $p_first_name;
+	}
+	public function setLastName($p_last_name){
+		$this->lastName = $p_last_name;
+	}
+	public function setEmail($p_email){
+		$this->email = $p_email;
+	}
+	public function setPass($p_pass){
+		$this->pass = $p_pass;
+	}
+	public function setSalt($p_salt){
+		$this->salt = $p_salt;
+	}
+	public function setAddress($p_address){
+		$this->address = $p_address;
+	}
+	public function setPhone($p_phone){
+		$this->phone = $p_phone;
+	}
+	public function setPostal($p_postal){
+		$this->postalCode = $p_postal;
+	}
+	public function setCity($p_city){
+		$this->city = $p_city;
+	}
+	public function setProvince($p_province){
+		$this->province = $p_province;
+	}
+    	public function setActive($p_active){
+        	$this->active = $p_active;
+    	}
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'clinicId' => $this->clinicId,
+			'vetId'    => $this->vetId,
+			'firstName'=>$this->firstName,
+			'lastName'=>$this->lastName,
+			'email'=>$this->email,
+			'pass'=>$this->pass,
+			'salt'=>$this->salt,
+			'active'=>$this->active,
+		);
+	}
+
+}
+?>
+

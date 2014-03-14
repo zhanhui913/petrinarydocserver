@@ -1,0 +1,106 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/controller//RouteController.php';
+require_once $root . '/../sys/utils/login_utils.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+
+/**
+ * Controller for the /pet route.
+ */
+class PetController implements RouteController {
+
+	/**
+	 * Model controller mediating database access for this class.
+	 */
+	private $mc;
+
+	/**
+	 * Instance of Slim application.
+	 */ 
+	private $app;
+
+	public function __construct() {
+		$this->mc = new ModelController();
+		$this->app = Slim\Slim::getInstance();
+	}
+
+	public function index(&$args) {
+		// TODO: determine if this is necessary -- may index of all pets
+		// if the /pet route becomes subroute of /owner/ route.	
+	}
+
+
+	public function create(&$args) {
+
+		// TODO: authorize action
+		// Make sure ownerId in session == ownerid in pet object.
+
+		$pet = json_decode($args['pet'], true);
+		if (!isset($pet['name']) 			|| 
+				!isset($pet['owner']) 		|| 
+				!isset($pet['sex'])				||
+				!isset($pet['age']) 			||
+				!isset($pet['breed'])			||
+				!isset($pet['species'])		) {
+			$this->app->halt(400);
+		} 
+
+		$ret = $this->mc->addPet(
+			$pet['name'],
+			$pet['owner'],
+			null,									// birthday
+			$pet['sex'],
+			$pet['age'],
+			null,									// colour
+			$pet['breed'],
+			$pet['species'],
+			0,										// is neutered
+			0											// net points 
+		);
+
+		echo json_encode(array(
+			'wasSuccessful' => ($ret != null)
+		));
+
+	} 
+
+	public function show(&$args) {
+	
+
+		if (!isset($args['petId'])) $this->app->redirect('/400');
+
+		$petId = $args['petId'];
+
+		// Determine if a pet with the given uri exists in the database.
+		$petExists = ($this->mc->getPet($petId) != null) ? true : false;
+
+		// TODO: render an "editable" or "uneditable" view based on whether
+		// user is logged in or not and has edit privileges for the pet with
+		// the uri being requested.
+		$renderEditView = true;	
+		if (!$petExists) {
+			$this->app->redirect('/404');	
+		} else if ($renderEditView) {
+			$this->app->render('pet_profile-tpl.php', 
+			  array('petId' => $petId));
+		} else {
+			$this->app->redirect('/403');	
+		}
+	}
+
+	public function update(&$args) {
+		// TODO: implement when name/family clinic can be changed.
+	}
+
+	public function destroy(&$args) {
+		// TODO: does this have a use case?
+	}
+
+}
+
+
+?>
+

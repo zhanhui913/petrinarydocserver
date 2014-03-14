@@ -1,0 +1,100 @@
+<?php 
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/model/Category.php';
+
+/**
+ *  Model class for a Interest 
+ */
+class Interest implements JsonSerializable{
+    /**
+    * Interest ID (UUID)
+    */
+    public $interestId;
+    /**
+    * Description of interest (string) 
+    */
+    public $interestDescription;
+    /**
+    * Path to related image of interest (string)
+    */
+    public $src;
+    /**
+    * Category object associated with the interest 
+    */
+    public $category;
+    
+    
+
+    /**
+     * Populate every field in Interest object
+     * @param Array $p_info_array Array with all information on Interest
+     * @param Category $p_category_model Category Model
+     */
+    public function setInfo($p_info_array){
+        $this->setInterestId($p_info_array['interest_id']);
+        $this->setInterestDescription($p_info_array['interest_description']);
+        $this->setSrc($p_info_array['src']);
+        
+        $this->setCategory($p_info_array);
+
+    }
+    
+    /*
+     * Getters
+     */
+
+    public function getInterestId(){
+        return $this->interestId;
+    }
+    public function getInterestDescription(){
+        return $this->interestDescription;
+    }
+    public function getCategory(){
+        return $this->category;
+    }
+    public function getSrc(){
+        return $this->src;
+    }
+
+    
+    /*
+     * Setters
+     */
+
+    public function setInterestId($p_interest_id){
+        $this->interestId = $p_interest_id;
+    }
+    public function setInterestDescription($p_interest_description){
+        $this->interestDescription = $p_interest_description;
+    }
+    public function setCategory($p_category){
+        //If the interest actually has a category associated with it
+        if($p_category['category_id'] != null && $p_category['description']!= null){
+            $this->category = new Category();
+            $this->category->setCategoryId($p_category['category_id']);
+            $this->category->setDescription($p_category['description']);
+        }else{
+            $this->category = null;
+        }
+    }
+    public function setSrc($p_src){
+        $this->src = $p_src;
+    }
+
+    /**
+     * Defines the manner by which this object is to be serialized to a 
+     * JSON object.
+     * @return Array Array of key value pairs in JSON object produced at 
+     *                 serialization.
+     */
+    public function jsonSerialize(){
+        return array(
+            'id'            => $this->interestId,
+            'description'   => $this->interestDescription,
+            'category'      => $this->category,
+            'src'           => $this->src
+        );
+    }
+}
+

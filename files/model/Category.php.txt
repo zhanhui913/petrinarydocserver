@@ -1,0 +1,74 @@
+<?php 
+
+/**
+ *  Model class for a Category 
+ */
+class Category implements JsonSerializable{
+    /**
+    * Category Id (UUID)
+    */
+    private $categoryId;
+    /**
+    * Description of the category (string)
+    */ 
+    private $description;
+
+
+    /**
+     *@param integer $id The database assigned id of this cateogroy.  
+     *                      Default value = null.
+     *@param string $descr The description associated with this category. 
+     *                        Default value = null
+     */
+    public function __construct($id = null, $descr = null) {
+        $this->categoryId = $id;
+        $this->description = $descr;
+    }
+
+    /**
+     * Populate every field in Category object
+     * @param Array $p_info_array Array with all information on Category
+     */
+    public function setInfo($p_info_array){
+        $this->setCategoryId($p_info_array['category_id']);
+        $this->setDescription($p_info_array['description']);
+    }
+    
+    /*
+     * Getters
+     */
+
+    public function getCategoryId(){
+        return $this->categoryId;
+    }
+    public function getDescription(){
+        return $this->description;
+    }
+
+    
+    /*
+     * Setters
+     */
+
+    public function setCategoryId($p_category){
+        $this->categoryId = $p_category;
+    }
+    
+    public function setDescription($p_description){
+        $this->description = $p_description;
+    }
+
+    /**
+     * Defines the manner by which this object is to be serialized to a 
+     * JSON object.
+     * @return [Array] Array of key value pairs in JSON object produced at 
+     *                 serialization.
+     */
+    public function jsonSerialize(){
+        return array(
+            'id'            => $this->categoryId,
+            'description'   => $this->description
+        );
+    }
+}
+

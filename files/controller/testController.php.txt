@@ -1,0 +1,93 @@
+<?php
+require_once 'modelController.php';
+require_once 'PDO_Helper.php';
+
+
+
+$array = array();
+$vmodel = new modelController();
+/*
+$result = $vmodel->getClinics();
+
+
+
+for($i=0;$i<sizeof($result);$i++){
+	echo ' Name : '.$result[$i]->getName();
+	echo "<br/>".' ID : '.$result[$i]->getId();
+	echo "<br/>".' Address : '.$result[$i]->getAddress();
+	echo "<br/>".' City : '.$result[$i]->getCity();
+	echo "<br/>".' Province : '.$result[$i]->getProvince();
+	echo "<br/>".' Postal Code : '.$result[$i]->getPostalCode();
+	echo "<br/>".' Lat : '.$result[$i]->getLatitude();
+	echo "<br/>".' Long : '.$result[$i]->getLongtitude();
+	echo "<br/>".' Email : '.$result[$i]->getEmail();
+	echo "<br/>".' Website : '.$result[$i]->getWebsite();
+	echo "<br/>".' Contact : '.$result[$i]->getContactPerson();
+	echo "<br/>".' Phone : '.$result[$i]->getPhone();
+	echo "<br/>".' Active : '.$result[$i]->getActive();
+	echo "<br/>".' Exp : '.$result[$i]->getExpirationDate();
+	echo "<br><br>";
+}
+
+
+//echo "Pet 123ABC is";
+$res = $vmodel->getPet("123ABC");
+//var_dump($res);
+
+
+$result = $vmodel->addPicture("123ABC","/usr/pic/pet.jpg","this is my pet");
+var_dump($result);
+*/
+
+//$interest = $vmodel->getAllInterest();
+/*for($i=0;$i<sizeof($interest);$i++){
+	echo "Interest ID = ".$interest[$i]->getInterestId();
+	echo ", Interest Name = ".$interest[$i]->getInterestDescription();
+	echo ", Category ID = ".$interest[$i]->getCategory()->getCategoryId();
+	echo ", Category Description = ".$interest[$i]->getCategory()->getDescription();
+	echo ", Src = ".$interest[$i]->getSrc();
+	echo "-----";
+}*/
+/*
+$interest = $vmodel->addInterest("jumping",2);
+echo "answer is".$interest;
+
+
+$Category = $vmodel->getAllCategory();
+for($i=0;$i<sizeof($Category);$i++){
+	echo "Cat ID =".$Category[$i]->getCategoryId();
+	echo "Cat Description =".$Category[$i]->getDescription();
+	echo "-----------";
+}*/
+
+/*
+$interest = $vmodel->getInterest(2);
+if($interest!=null){
+	echo "Interest ID = ".$interest->getInterestId();
+	echo ", Interest Name = ".$interest->getInterestDescription();
+	echo ", Category ID = ".$interest->getCategory()->getCategoryId();
+	echo ", Category Description = ".$interest->getCategory()->getDescription();
+	echo ", Src = ".$interest->getSrc();
+}else {echo "null";}
+*/
+
+//Check admin login
+/*
+$result = $vmodel->checkAdminLogin("dspaul@gmail.com");
+if($result!=null){
+echo "Admin username =".$result->getUsername();
+echo "Admin email =".$result->getEmail();
+echo "Admin pass =".$result->getPass();
+echo "Admin salt =".$result->getSalt();
+echo "Admin Lastlogin =".$result->getLastLogin();
+echo "Admin time =".$result->getTime();
+}
+else 
+	echo "null";
+*/
+
+$result = $vmodel->addInterest("Zhan","2","zhan.pic");
+echo "Result is ".$result;
+
+?>
+

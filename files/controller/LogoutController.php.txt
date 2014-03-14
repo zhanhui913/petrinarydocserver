@@ -1,0 +1,71 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controller for the /Logout route.
+ */
+class LogoutController implements RouteController {
+	
+	private $app;
+
+	public function __construct() {
+		$this->app = Slim\Slim::getInstance();
+	}
+
+	public function index(&$args) {
+		
+		// Clear $_SESSION[] array.
+		$_SESSION = array();
+		
+		
+		$cookieParams = session_get_cookie_params();
+		
+		// Delete cookie.
+		setcookie(session_name(), '', time() - 42000,
+		$cookieParams['path'],
+		$cookieParams['domain'],
+		$cookieParams['secure'],
+		$cookieParams['httponly']
+		);
+		
+		
+		// Destroy the session.
+		session_destroy();
+		
+		// Redirect to the homepage.
+		$this->app->redirect('/');
+	}
+
+	public function create(&$args) {
+		
+		// Clear $_SESSION[] array.
+		$_SESSION = array();
+		
+		
+		$cookieParams = session_get_cookie_params();
+		
+		// Delete cookie.
+		setcookie(session_name(), '', time() - 42000,
+		$cookieParams['path'],
+		$cookieParams['domain'],
+		$cookieParams['secure'],
+		$cookieParams['httponly']
+		);
+		
+		
+		// Destroy the session.
+		session_destroy();
+		
+		// Redirect to the homepage.
+		$this->app->redirect('/');
+		
+	}
+
+	public function show(&$args) {}
+	public function update(&$args) {}
+	public function destroy(&$args) {}
+}
+?>

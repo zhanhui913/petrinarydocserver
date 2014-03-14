@@ -1,0 +1,130 @@
+<?php
+
+/**
+ *  Model class for a Achievement Record
+ */
+class AchievementRecord implements JsonSerializable{
+
+     /**
+     * Achievement ID, references Achievement table (UUID)
+     */
+    private $achievementId;
+     /**
+     * Achievement Name, taken from Achievement table (introduces redundancy) (string)
+     */    
+    private $achievementName;
+     /**
+     * Achievement Description, taken from Achievement table (introduces redundancy) (string)
+     */  
+    private $achievementDescription;
+     /**
+     * Achievement Points (int), specific to the pet (multiplier can be applied)
+     */  
+    private $points;
+     /**
+     * Date that the Achievement was added (datetime)
+     */  
+    private $date;
+     /**
+     * Pet Id for which the Achievement is for, references Pet table/model (unique id)
+     */
+    private $petId;
+     /**
+     * @deprecated
+     * Vet Id that gave the Achievement (NULLABLE) (UUID) 
+     */
+    private $vetId;
+     /**
+     * @deprecated
+     * Vet Name that corresponds to the Vet Id from the Vets table
+     */
+    private $vetName;
+
+    /**
+     * Populate every field in achievement Record object
+     * @param Array $p_info_array Array with all information on AchievementRecord
+     */
+    public function setInfo($p_info_array) {
+        $this->setAchievementId($p_info_array['achievement_id']);
+		$this->setPetId($p_info_array['pet_id']);
+		$this->setPoints($p_info_array['points']);
+		$this->setDate($p_info_array['dates']);
+        $this->setAchievementName($p_info_array['achievement_name']);
+        $this->setAchievementDescription($p_info_array['description']);
+        $this->setVetId($p_info_array['vet_id']);
+        //$this->setVetName($p_info_array['vet_name']); dont need this for now
+    }
+
+    /**
+     * Getters
+     */
+
+    public function getAchievementId() {
+        return $this->achievementId;
+    }
+    public function getAchievementName(){
+        return $this->achievementName;
+    }
+    public function getAchievementDescription(){
+        return $this->achievementDescription;
+    }
+    public function getPoints() {
+        return $this->points;
+    }
+    public function getDate() {
+        return $this->date;
+    }
+    public function getPetId() {
+        return $this->petId;
+    }
+    public function getVetId(){
+        return $this->vetId;
+    }
+    public function getVetName(){
+        return $this->vetName;
+    }
+
+    /**
+     * Setters
+     */
+
+    public function setAchievementId($p_achievement_id) {
+        $this->achievementId = $p_achievement_id;
+    }
+    public function setAchievementName($p_achievement_name){
+        $this->achievementName = $p_achievement_name;
+    }
+    public function setAchievementDescription($p_achievement_description){
+        $this->achievementDescription = $p_achievement_description;
+    }
+    public function setPoints($p_points) {
+        $this->points =  $p_points;
+    }
+    public function setDate($p_date) {
+        $this->date = $p_date;
+    }
+    public function setPetId($p_pet_id) {
+        $this->petId = $p_pet_id;
+    }
+    public function setVetID($p_vet_id){
+        $this->vetId = $p_vet_id;
+    }
+    public function setVetName($p_vet_name){
+        $this->vetName = $p_vet_name;
+    }
+
+    /**
+     * Data to be serialized into JSON
+     * @return Array
+     */
+    public function jsonSerialize() {
+        return array(
+            'AchievementId' 	=> $this->achievementId,
+			'PetId' 			=> $this->petId,
+			'points'			=> $this->points,
+			'date'				=> $this->date
+        );
+    }
+}
+?>
+

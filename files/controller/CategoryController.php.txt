@@ -1,0 +1,62 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controller for the /Category route.
+ */
+class CategoryController implements RouteController {
+
+  private $mc;
+  private $app;
+
+  public function __construct() {
+    $this->mc = new ModelController();
+    $this->app = Slim\Slim::getInstance();
+  }
+
+
+  public function index(&$args) {
+    echo json_encode($this->mc->getAllCategory());
+  }
+
+  public function create(&$args) {
+   /* 
+    if (!isset($args['interest'])) {
+      $this->app->halt(400);
+    }
+
+    $interest = json_decode($args['interest'], true);
+    if (isset($interest['description'])    &&
+        isset($interest['category']['id']) &&
+        isset($interest['src'])) {
+
+      $descr = $interest['description']; 
+      $categoryId = $interest['category']['id'];
+      $src = $interest['src'];
+
+      $wasSuccessful = $this->mc->addInterest($descr, $categoryId, $src);
+
+      echo json_encode(array('wasSuccessful' => $wasSuccessful));
+    
+    } else {
+      // Else, request was malformed.
+      //$this->app->halt(400);
+    }
+    */
+  }
+
+  public function show(&$args) {
+
+
+  }
+
+  public function update(&$args) {}
+  public function destroy(&$args) {}
+
+}
+
+?>

@@ -1,0 +1,110 @@
+<?php
+
+/**
+ * Model class for an Admin
+ */
+class Admin implements JsonSerializable {
+	
+	/**
+	* Admin Username (string) from Admin table
+	*/
+	private $username;
+	/**
+	* Admin Email (string) from Admin table
+	*/
+	private $email;
+	/**
+	* Admin Hashed Password from Admin table
+	*/
+	private $pass;
+	/**
+	* Admin Salt from Admin Table
+	*/
+	private $salt;
+	/**
+	* Datetime to track last login attempt
+	*/
+	private $lastLogin;
+	/**
+	* The number of times a user has tried to log in (int)
+	*/
+	private $time;
+
+	/**
+	*	Populate every field in Admin object
+	* @param Array $p_info_array Array with all information on Admin
+	*/
+	public function setInfo($p_info_array){
+		$this->setUsername($p_info_array['username']);
+		$this->setEmail($p_info_array['email']);
+		$this->setPass($p_info_array['pass']);
+		$this->setSalt($p_info_array['salt']);
+		$this->setLastLogin($p_info_array['lastLogin']);
+		$this->setTime($p_info_array['time']);
+	}
+
+	/**
+	* 	Getters
+	*/
+
+	public function getEmail(){
+		return $this->email;
+	}
+	public function getPass(){
+		return $this->pass;
+	}
+	public function getSalt(){
+		return $this->salt;
+	}
+	public function getUsername(){
+		return $this->username;
+	}
+	public function getLastLogin(){
+		return $this->lastLogin;
+	}
+	public function getTime(){
+		return $this->time;
+	}
+
+	/**
+	* 	Setters
+	*/
+
+	public function setEmail($p_email){
+		$this->email = $p_email;
+	}
+	public function setPass($p_pass){
+		$this->pass = $p_pass;
+	}
+	public function setSalt($p_salt){
+		$this->salt = $p_salt;
+	}
+	public function setUsername($p_username){
+		$this->username = $p_username;
+	}
+	public function setLastLogin($p_last_login){
+		$this->lastLogin = $p_last_login;
+	}
+	public function setTime($p_time){
+		$this->time = $p_time;
+	}
+
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'username'=>$this->username,
+			'email'=>$this->email,
+			'pass'=>$this->pass,
+			'salt'=>$this->salt,
+			'lastLogin'=>$this->lastLogin,
+			'time'=>$this->time
+		);
+	}
+
+}
+?>
+

@@ -1,0 +1,91 @@
+<?php
+
+// Require configuration file.
+$root = $_SERVER['DOCUMENT_ROOT'];
+
+require_once $root . "/../sys/controller/ModelController.php";
+
+// TODO: factor into AuthUtils class?
+
+/**
+ * Called to start a secure session to the server.
+ */
+function sec_session_start() {
+	$session_name = 'session';
+
+	// $secure = SECURE (from config file, when ready)
+	$secure = false;
+
+	// Ensure that Javascript cannot access the session id.
+	$httponly = TRUE;
+
+	// Force sessions to use cookies only.
+	if (ini_set('session.use_only_cookies', 1) === FALSE) {
+		// Redirect the index.php for now.
+		header('Location: /');
+		exit(0);
+	}
+
+	// Get the parameters from the current cookie.
+	$cookieParams = session_get_cookie_params();
+	
+	session_set_cookie_params(
+		$cookieParams['lifetime'],
+		$cookieParams['path'],
+		$cookieParams['domain'],
+		$secure,
+		$httponly
+	);
+
+	// Set session parameters.
+	session_name($session_name);
+
+	// Call usual PHP session starter.
+	session_start();
+
+	// Delete the onld session id and create a new one.
+	session_regenerate_id();
+}
+
+
+/**
+ * Determines if the user has already established a valid session with the
+ * server.
+ */
+function authorize($app, $username=null) {
+	
+	// Check if the user is logged in
+	if (isset($_SESSION['username'], $_SESSION['loginString'], $_SESSION['role'])) {
+			
+		$username = isset($username) ? $username : $_SESSION['username'];
+
+		$mc = new modelController();
+		
+		if ($_SESSION['role'] == 'admin')
+			$user = $mc->checkAdminLogin($username);
+		elseif ($_SESSION['role'] == 'clinic')
+			$user = $mc->checkClinicAccount($username);
+		else
+			$user = $mc->checkOwnerAccount($username);
+		
+			
+		$loginString = hash('sha512', $user['pass'] . $_SERVER['HTTP_USER_AGENT'] 
+				. $_SESSION['role']);
+			
+		
+		if($_SESSION['loginString'] == $loginString) {
+			//User is logged in and has the correct permissions
+			return true;
+		}
+		else {
+			// User does not have permissions
+			$app->redirect('/403');
+		}
+	}
+	else {
+		// User is not logged in
+		return false;
+	}
+}
+?>
+

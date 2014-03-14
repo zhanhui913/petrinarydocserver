@@ -1,0 +1,27 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+
+/**
+ * Controller for the /Clinics route.
+ */
+class ClinicsController implements RouteController{
+	
+	private $mc;
+
+	public function __construct() {
+		$this->mc = new ModelController();
+	}
+
+	public function index(&$args) {
+		echo json_encode($this->mc->getClinics());
+	}
+
+	public function create(&$args) {}
+	public function show(&$args) {}
+	public function update(&$args) {}
+	public function destroy(&$args) {}
+}
+?>

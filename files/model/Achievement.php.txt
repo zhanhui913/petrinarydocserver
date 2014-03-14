@@ -1,0 +1,84 @@
+<?php
+
+/**
+ *  Model class for Achievement
+ */
+class Achievement implements JsonSerializable{
+	
+    /**
+    *  Name of the Achievement (string)
+    */
+    private $achievementName;
+    /**
+    *  Id of the Achievement (UUID)
+    */
+    private $achievementId;
+    /**
+    *  Default Achievement points (Int)
+    */
+    private $points;
+    /**
+    *  Description of the Achievement (string)
+    */
+    private $description;
+
+    /**
+     * Populate every field in achievement object
+     * @param Array $p_info_array Array with all information on Achievement
+     */
+    public function setInfo($p_info_array) {
+        $this->setName($p_info_array['name']);
+        $this->setId($p_info_array['achievement_id']);
+        $this->setPoints($p_info_array['points']);
+        $this->setDescription($p_info_array['description']);
+    }
+    
+    /**
+     * Getters
+     */
+
+    public function getName() {
+        return $this->achievementName;
+    }
+    public function getId() {
+        return $this->achievementId;
+    }
+    public function getPoints() {
+        return $this->points;
+    }
+    public function getDescription() {
+        return $this->description;
+    }
+
+    /**
+     * Setters
+     */
+
+    public function setName($p_achievement_name) {
+        $this->achievementName = $p_achievement_name;
+    }
+    public function setId($p_achievement_id) {
+        $this->achievementId = $p_achievement_id;
+    }
+    public function setPoints($p_points) {
+        $this->points = $p_points;
+    }
+    public function setDescription($p_description) {
+        $this->description = $p_description;
+    }
+
+    /**
+     * Data to be serialized into JSON
+     * @return Array
+     */
+    public function jsonSerialize() {
+        return array(
+            'achievementId'   => $this->achievementId,
+            'achievementName' => $this->achievementName,
+            'points'          => $this->points,
+            'description'     => $this->description
+        );
+    }
+}
+?>
+

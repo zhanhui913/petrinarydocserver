@@ -1,0 +1,73 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * @DEPRECATED
+ */
+class AuthController extends \Slim\Middleware {
+
+   /**
+   	 * The realm which the user is attempting to access.
+     * @var string
+     */
+    protected $realm;
+ 
+    /**
+     * Db controller.
+     */
+    private $mc;
+    /**
+     * Constructor
+     *
+     * @param   string  $realm      The HTTP Authentication realm
+     */
+    public function __construct($realm = 'Protected Area') {
+    	$this->mc = new ModelController();
+        $this->realm = $realm;
+    }
+ 
+    /**
+     * Called to deny access on missing or bad credentials.
+     */   
+    public function denyAccess() {
+        $res = $this->app->response();
+        $res->status(401);
+        $res->header('WWW-Authenticate', sprintf('Basic realm="%s"', $this->realm));        
+    }
+ 
+    /**
+     * Authenticate the given petId
+     *
+     * @param   string  $username   The HTTP Authentication username
+     * @param   string  $password   The HTTP Authentication password     
+     *
+     */
+    public function authenticate($petId) {
+        if(!ctype_alnum($petId)) {
+            return false;
+        }
+        else {
+        	return ($this->mc->getPet($petId) != null);
+        }
+    }
+ 
+    /**
+     * This method will check the HTTP request headers for previous authentication. If
+     * the request has already authenticated, the next middleware is called. Otherwise,
+     * a 401 Authentication Required response is returned to the client.
+     */
+    public function call() {
+        $req = $this->app->request();
+        $res = $this->app->response();
+        $authUser = $req->headers('PHP_AUTH_USER');
+         
+        if ($this->authenticate($authUser)) {
+            $this->next->call();
+        } else {
+            $this->denyAccess();
+        }
+    }
+}
+?>

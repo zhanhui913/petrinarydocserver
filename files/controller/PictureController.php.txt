@@ -1,0 +1,198 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controller for the /picture route.
+ */
+class PictureController implements RouteController {
+
+	private $mc;
+	private $app;
+	private $ALLOWED_EXTENSIONS;
+	private $MAX_FILE_SIZE;
+
+	public function __construct() {
+		$this->mc = new ModelController();
+		$this->app = Slim\Slim::getInstance();
+		$this->ALLOWED_EXTENSIONS = array('gif', 'jpeg', 'jpg', 'png');
+		$this->MAX_FILE_SIZE = 1000000;
+	}
+
+	public function index(&$args) {
+		$petId = $args['petId'];
+		$picId = $args['picId'];
+
+		// TODO: should proide JSON object full of picture objects.
+	}
+
+	public function create(&$args) {
+
+		//if (!isset($args['pet']) || !isset($args['files']) 	||
+		//	!isset($args['picture']['description'])) {
+		//	$this->app->halt(400);
+		//}
+
+		$petId = $args['picture']['pet'];
+		$files = $args['files'];
+
+		if ((
+			($files["file"]["type"] == "image/gif") 		||
+		 	($files["file"]["type"] == "image/jpeg")		||
+		 	($files["file"]["type"] == "image/jpg")			||
+		 	($files["file"]["type"] == "image/pjpeg")		||
+		 	($files["file"]["type"] == "image/x-png")		||
+		 	($files["file"]["type"] == "image/png"))		&&
+		 	($files["file"]["size"] < $this->MAX_FILE_SIZE)) {
+
+			if ($files["file"]["error"] > 0) {
+
+				// File has error -- report failure back to client side.	
+				echo json_encode(
+					array(
+						'uploadSuccessful' => false, 
+						'errorText' => 'File arrive at server with errors.  ' . 
+						  'Please try again.'
+					)
+				);
+			} else {
+				try {
+					$picturesHome = '/api/user_pictures/';
+
+					// Check if there is a directory associated with this pet id, if not
+					// create it.
+					// TODO: this will have to be made more secure -- maybe by getting
+					// salt from db or whatever
+					$petIdHash = md5($petId);
+
+					$root = $_SERVER['DOCUMENT_ROOT'];
+
+					umask(0);
+					if (is_dir($root . $picturesHome . $petIdHash) == false) {
+						mkdir($root . $picturesHome . $petIdHash, 0777);
+						chmod($root . $picturesHome . $petIdHash, 0777);
+					}
+
+					$timestamp = time();
+					$src = $picturesHome . $petIdHash . '/' . $timestamp . '_' .
+					  $files['file']['name'];
+
+					move_uploaded_file($files["file"]["tmp_name"], 
+					  $root . $src);
+
+					// Store filepath in db and get pictureId
+					$pictureDescription = $args['picture']['description'];
+
+					$pictureId = $this->mc->addPicture($petId, $src, 
+					  $pictureDescription);
+
+					if ($pictureId == null) {
+						echo json_encode(
+							array(
+								'uploadSuccessful' => false,
+								'errorText' => 'File not successfully uploaded.'
+							)
+						);
+
+						unlink($root . $picturesHome . $src);
+						return;
+					}
+					$this->app->response->setStatus(201);
+
+					echo json_encode(
+						array(
+							'uploadSuccessful' => true,
+							'id' => $pictureId,
+							'src' => $src
+						)
+					);
+				} catch (Exception $e) {
+					echo json_encode(
+						array(
+							'uploadSuccessful' => false,
+							'errorText' => $e->getMessage()
+						)
+					);			
+				}
+
+		  	}
+
+		} else {
+
+			echo json_encode(
+				array(
+					'uploadSuccessful' => false, 
+					'errorText' => 'Image not of correct type or file too large.'
+				)
+			);
+
+		}
+	}
+
+	public function show(&$args) {
+		
+		$petId = $args['petId'];
+		$picId = $args['picId'];
+
+	}
+
+	public function update(&$args) {
+
+		$petId = $args['petId'];
+		if (!isset($args['petId']) || !isset($args['picId'])) {
+			$this->app->halt(400);
+		}
+
+		if (isset($args['description'])) {
+			echo json_encode(
+				array(
+					'updateSuccessful' => $this->mc->
+					  updatePictureDescription($args)
+				)
+			);
+		} else if (isset($args['description'])) {
+			$this->app->halt(403);
+		} else {
+			// TODO: update views/likes
+		}
+	}
+
+	public function destroy(&$args) {
+
+		if (!isset($args['petId']) || !isset($args['picId'])) {
+			$this->app->halt(400);
+		}
+
+		$petId = $args['petId'];
+		$picId = $args['picId'];
+
+		// TODO: request getPicSrc($p_pic_id) controller method
+		$pics = $this->mc->getPet($petId)->getPictureList();
+		$src = "";
+		foreach($pics as $pic) {
+			if ($pic->getPicId() == $picId) {
+				$src = $pic->getPicPath();
+			}
+		}
+
+		$root = $_SERVER['DOCUMENT_ROOT'];
+		$wasSuccessful = $this->mc->deletePicture($petId, $picId);
+		if ($wasSuccessful && (strpos($src, '/img/') == false)) {
+			// Remove from file system.
+			unlink($root . $src);
+		}
+
+		echo json_encode(
+			array(
+				'deletionSuccessful' => $wasSuccessful
+			)
+		);	
+	}
+
+}
+?>
+

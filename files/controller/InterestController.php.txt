@@ -1,0 +1,142 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+require_once $root . '/../sys/utils/image_utils.php';
+
+/**
+ * Controller for the /Interest route.
+ */
+class InterestController implements RouteController {
+
+  private $mc;
+  private $app;
+
+  public function __construct() {
+    $this->mc = new ModelController();
+    $this->app = Slim\Slim::getInstance();
+  }
+
+
+  public function index(&$args) {
+    echo json_encode($this->mc->getAllInterest());
+  }
+
+  public function create(&$args) {
+    
+    if (!isset($args['interest'])) {
+      $this->app->halt(400);
+    }
+
+    $interest = json_decode($args['interest'], true);
+    if (1 == true) {
+
+      $descr = $interest['description']; 
+      $categoryId = $interest['category']['id'];
+      $img = $args['imgFile'];
+      // Upload file to server.
+      // We're going to do it quick and dirty.
+      $picturesHome = '/api/user_pictures/interests';
+      $hash = md5($categoryId . time());
+      $root = $_SERVER['DOCUMENT_ROOT'];
+
+
+      umask(0);
+      if (is_dir($root . $picturesHome . $hash) == false) {
+        mkdir($root . $picturesHome . $hash, 0777);
+        chmod($root . $picturesHome . $hash, 0777);
+      }
+
+      $timestamp = time();
+      $src = $picturesHome . $hash . '/' . $timestamp . '_' .
+        $img['name'];
+
+
+      move_uploaded_file($img["tmp_name"], $root . $src);
+
+      fit_into_circle($src);
+
+      $wasSuccessful = $this->mc->addInterest($descr, $categoryId, $src);
+
+      echo json_encode(array('wasSuccessful' => $wasSuccessful, 'src' => $src));
+    
+    } else {
+      // Else, request was malformed.
+      //$this->app->halt(400);
+    }
+  }
+
+  public function show(&$args) {
+
+
+  }
+
+  public function update(&$args) {
+    if (!isset($args['interest'])) {
+      $this->app->halt(400);
+    }
+
+    $interest = json_decode($args['interest'], true);
+    $id = $args['id'];
+    $descr = $interest['description']; 
+    $categoryId = $interest['category']['id'];
+
+    if (isset($args['imgFile'])) {
+
+      $img = $args['imgFile'];
+      // Upload file to server.
+      // We're going to do it quick and dirty.
+      $picturesHome = '/api/user_pictures/interests/';
+      $hash = md5($categoryId . time());
+      $root = $_SERVER['DOCUMENT_ROOT'];
+
+
+      umask(0);
+      if (is_dir($root . $picturesHome . $hash) == false) {
+        mkdir($root . $picturesHome . $hash, 0777);
+        chmod($root . $picturesHome . $hash, 0777);
+      }
+
+      $timestamp = time();
+      $src = $picturesHome . $hash . '/' . $timestamp . '_' .
+        $img['name'];
+
+      move_uploaded_file($img["tmp_name"], $root . $src);
+
+      fit_into_circle($src);
+
+
+      $wasSuccessful = 
+        $this->mc->editInterestDescription($id, $descr);
+      $wasSuccessful =
+        $this->mc->editInterestCategory($id, $categoryId) && $wasSuccessful;
+      $wasSuccessful =
+        $this->mc->editInterestSrc($id, $src) && $wasSuccessful;
+
+      //fit_into_circle($src);
+
+      echo json_encode(array('wasSuccessful' => $wasSuccessful, 'src' => $src,
+        'hello' => 'yeah'));
+    
+    } else {
+      $wasSuccessful = 
+        $this->mc->editInterestDescription($id, $descr)   &&
+        $this->mc->editInterestCategory($id, $categoryId);
+
+      echo json_encode(array('wasSuccessful' => $wasSuccessful, 'src' => null));
+    }    
+  }
+  public function destroy(&$args) {
+    $id = $args['id'];
+
+    // TODO: authorize action
+    $ret = $this->mc->deleteInterest($id);
+    echo json_encode(array('wasSuccessful' => $ret));
+
+  }
+
+}
+
+?>

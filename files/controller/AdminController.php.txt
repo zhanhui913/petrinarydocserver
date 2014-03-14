@@ -1,0 +1,112 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+* Controller for the /Admin route.
+*/
+class AdminController implements RouteController {
+  
+  private $mc;
+  private $app;
+
+  public function __construct() {
+    $this->mc = new ModelController();
+    $this->app = Slim\Slim::getInstance();
+  }
+
+  public function index(&$args) {
+    $this->app->render('/admin/admin-tpl.html');
+  }
+  public function create(&$args) {
+  	
+  	$username = $args['username'];
+  	$password = $args['password'];
+  	$role = 'admin';
+  	$redirectTo = null;
+  	
+  	/**
+  	 * Determines if the some is attempting to guess the password of the user with
+  	 * user_id by querying the db for the number of attemps within the last 5
+  	 * minutes.  If more than five attempts have been made in that time frame,
+  	 * the function returns true.  Else, it returns false.
+  	 */
+  	function checkbrute($user_id) {
+  		// TODO: implement
+  		return false;
+  	}
+  	
+  	$user = $this->mc->checkAdminLogin($username);
+  	
+  	$loginSuccessful = FALSE;
+  	
+  	
+  	// Check if this username exists
+  	if ($user != null) {
+  	
+  		// Check if password is correct
+  		$hashPassword = hash('sha512', $user['salt'] . $password);
+  			
+  		// TODO: admin login isn't salted, would need this instead:
+  		if ($password == $user['pass']) {
+  			//if ($hashPassword == $user['pass']) {
+  	
+  			// Correct credentials
+  			$_SESSION['username'] = $username;
+  			$_SESSION['role'] = $role;
+  			$userBrowser = $_SERVER['HTTP_USER_AGENT'];
+  	
+  			// TODO: Password isn't salted, use this for now
+  			//$_SESSION['loginString'] = hash('sha512', $hashPassword .
+  			//		$userBrowser . $role);
+  			$_SESSION['loginString'] = hash('sha512', $password .
+  					$userBrowser . $role);
+  	
+  			$loginSuccessful = TRUE;
+  		}
+  	}
+  	
+  	
+  	// Referrer = the url which sent the user to the admin login page -- if set and
+  	// not equal to the home page, they user will be redirected to this page on
+  	// on successful login.  Else, they will be redirected to their owner profile
+  	// page.
+  	if (isset($args['referrer'])) {
+  		$referrer = $args['referrer'];
+  	} else {
+  		$referrer = $this->app->request->getReferrer();
+  	}
+  	$host = $this->app->environment['slim.url_scheme'] . '://' .
+  			$this->app->request->getHost();
+  	$referrerPath = str_replace($host, '', $referrer);
+  	 
+  	 
+  	if ($referrerPath != '/' && $referrerPath != '/index.php' &&
+  	$referrerPath != '/login' && $referrerPath != '/admin') {
+  		$redirectTo = $referrer;
+  	} else {
+  	
+  		$redirectTo = '/admin/' . $username;
+  	}
+  	
+  	
+  	echo json_encode(array(
+  			'loginSuccessful' => $loginSuccessful,
+  			'redirectTo' => $redirectTo
+  	));
+  	
+  	
+  }
+  public function show(&$args) {
+
+    // TODO: login check, make sure they can access this resource
+    $this->app->render('/admin/admin-tpl.html');
+
+  }
+  public function update(&$args) {}
+  public function destroy(&$args) {}
+}
+?>

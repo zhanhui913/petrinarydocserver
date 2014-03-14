@@ -1,0 +1,786 @@
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/PDO_Helper.php';
+require_once $root . '/../sys/model/Vet.php';		
+require_once $root . '/../sys/model/Pet.php';	
+require_once $root . '/../sys/model/Owner.php'; 
+require_once $root . '/../sys/model/Admin.php'; 
+require_once $root . '/../sys/model/Clinic.php';	
+require_once $root . '/../sys/model/InterestRecord.php';	
+require_once $root . '/../sys/model/Interest.php';
+require_once $root . '/../sys/model/Picture.php';	
+require_once $root . '/../sys/model/PatientOwner.php';
+require_once $root . '/../sys/model/AchievementSet.php';
+require_once $root . '/../sys/model/Achievement.php';
+require_once $root . '/../sys/model/AchievementRecord.php';
+require_once $root . '/../sys/model/Category.php';
+
+/**
+* The interface that provides methods to the front end to call
+*/
+class ModelController {	
+
+    /**
+    * Declaring a PDO_Helper
+    */
+	private $helper;
+
+    /**
+    * Instantiating a new PDOHelper class to run queries upon construction
+    */
+	public function __construct() {
+		$this->helper = new PDOHelper();
+	}
+    /**************************************************************************
+    *
+    *    Admin Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get the Admin object specified by the provided email
+     * @param  String $p_email Provided email
+     * @return Object Returns an Admin object if exist, null otherwise
+     */    
+    public function checkAdminLogin($p_email){
+    	return $this->helper->checkAdminLogin($p_email);
+    }
+
+    /**************************************************************************
+    *
+    *    Owner Methods
+    *
+    /**************************************************************************/
+    
+    /**
+     * Get the password,salt,and active status for a specific owner by email
+     * @param String $p_ownerId Can be either password or email
+     * @return Array Returns array of password,salt,and active status if the email 
+     * exists,else returns null.
+     */
+    public function checkOwnerAccount($p_ownerId){
+        return $this->helper->checkOwnerId($p_ownerId);
+    }
+    
+    /**
+     * Given email, passowrd, salt, username and picture path, create a new owner
+     * @param String  $p_email Provided email
+     * @param String  $p_password Provided password
+     * @param String  $p_salt Provided salt
+     * @param String  $p_username Provided username
+     * @param String  $p_pic_path Provided picture path
+     * @return Boolean Returns true if successful, false otherwise 
+     */
+    public function createOwner($p_email,$p_password,$p_salt,$p_username,$p_pic_path){
+        return $this->helper->createOwner($p_email,$p_password,$p_salt,$p_username,$p_pic_path);
+    }
+    
+    /**
+     * Update an owner's username by email
+     * @param String $p_email Provided Email
+     * @param String $p_username Provided new username
+     * @return Boolean Returns true if successful, false otherwise
+     */
+    public function updateOwnerUsername($p_email,$p_username){
+        return $this->helper->updateOwnerUsername($p_email,$p_username);
+    }
+    
+    /**
+     *  Update an owner's account status by email
+     * @param String $p_email Provided Owner's email
+     * @param Boolean $p_active Provided active status
+     * @return Boolean Returns true if successful, false otherwise
+     */
+    public function updateOwnerActiveStatus($p_email,$p_active){
+        return $this->helper->updateOwnerActiveStatus($p_email,$p_active);
+    }
+
+     /**
+     * Update an owner's password and salt by email
+     * @param String $p_email Provided email
+     * @param String $p_password Provided password
+     * @param String $p_salt Provided salt
+     * @return Boolean Returns true if successful, false otherwise
+     */
+    public function updateOwnerPassword($p_email,$p_password,$p_salt){
+        return $this->helper->updateOwnerPassword($p_email,$p_password,$p_salt);
+    } 
+    
+     /**
+     * Get an owner object by either username or email
+     * @param String $p_ownerId Provided username or email
+     * @return Object Returns owner object if found, otherwise returns null
+     */
+    public function getOwnerObject($p_ownerId){
+        $result = $this->helper->getOwnerById($p_ownerId);
+        $owner = new Owner();
+        if($result != null){
+            $petList = $this->getPetList($result['email']);
+            $owner->setInfo($result,$petList);
+            return $owner;
+        }else{
+            return null;
+        }
+    }
+
+    /**************************************************************************
+    *
+    *    Vet Methods
+    *
+    /**************************************************************************/
+
+	/**
+    * @deprecated
+ 	* Returns vet object if email is valid otherwise return null
+ 	* @param  String $p_email Provided email
+ 	* @return Object Returns the Vet Object if found, else returns null
+ 	*/
+	public function getVetObject($p_email){
+		$vet = new vet();
+		$vet->findEmail($p_email);
+
+		//Find the provided email in db, return with password and salt if valid, else returns null
+		$result = $this->helper->checkEmailQuery("vet",$p_email);
+		if(is_null($result['email'])){
+			return null;
+		}else {
+			$vet->setEmail($result['email']);
+			$vet->setPass($result['pass']);
+			$vet->setSalt($result['salt']);
+			return $vet;
+		}
+	}
+
+	/** 
+     * @deprecated
+     * GetVetObject already returns the object itself with all info
+	 * Parameter has to be vet object, returns the same vet object with populated fields
+	 * @param  String $p_vet Provided Vet Model Object
+	 * @return Object Returns the Vet Object if found, else returns null
+	 */
+	public function getVetInfo($p_vet){
+		$vet->setInfo();
+		return $vet;
+	}
+
+
+	/**************************************************************************
+    *
+    *    Pet Methods
+    *
+    /**************************************************************************/
+
+	/**
+	 * Gets the pet model object
+	 * @param  String $p_pet_id Provided pet ID
+	 * @return Object Returns Pet object if found, else returns null otherwise
+	 */
+	public function getPet($p_pet_id){
+ 		//Getting the array of interest objects for this pet
+        $result = $this->helper->getPetInfoQuery($p_pet_id);
+        if(count($result)==0) {
+            return null;
+        } else {
+ 			//Getting the array of interest objects for this pet
+            $interestArray = $this->getInterestRecord($p_pet_id);
+         
+ 			//Getting the array of picture objects for this pet
+            $pictureArray = $this->getPictures($p_pet_id);
+            //Creating the empty array for putting picture objects
+
+            $pet = new Pet(); 
+		    $pet->setInfo($result[0],$pictureArray,$interestArray);
+            return $pet;
+        }
+    }
+    /**
+     * Get an array of pet objects through owner email(owner_id)
+     * @param String $p_email Provided email
+     * @return Object Returns array of pet objects if email is found, returns null otherwise
+     */
+    public function getPetList($p_email){
+        $result = $this->helper->getAllPetId($p_email);
+        $petList = array();
+        if($result != null){
+            for($i=0; $i < count($result); $i++) {
+                $pet = $this->getPet($result[$i][0]);
+                array_push($petList,$pet);
+            }
+            return $petList;
+        }else{
+            return null;
+        }
+    }
+    /**
+     * Add a pet to an owner
+     * @param String $p_name Provided name
+     * @param String $p_ownerId Provided ownerId (owner email)
+     * @param String $p_birthday Provided birthday (YYYY-MM-DD)
+     * @param String $p_sex Provided sex
+     * @param Integer $p_age Provided age
+     * @param String $p_colour Provided colour
+     * @param String $p_breed Provided breed
+     * @param String $p_species Provided species
+     * @param Boolean $p_isNeutered Provided isNeutered
+     * @param Integer $p_netPoints Provided netPoints
+     * @return String|Boolean Return Pet's ID if successful, null otherwise
+     **/
+    public function addPet($p_name,$p_ownerId,$p_birthday,$p_sex,$p_age,
+        $p_colour,$p_breed,$p_species,$p_isNeutered,$p_netPoints){
+        $time = time();
+
+        //Pet Id will be the only ID that uses php uniqId (13 characters)
+        $p_petId = uniqid();
+
+        // Will be passed username as id, so need to get email from db as this 
+        // is the primary key in the OWNER table.
+        $result = $this->helper->getOwnerById($p_ownerId);
+        $ownerId = $result['email'];
+
+        // Create an array based on given info
+        $petArray = array( 
+            'name'          =>  $p_name,
+            'pet_id'        =>  $p_petId,
+            'owner_id'      =>  $ownerId,
+            'birthday'      =>  $p_birthday,
+            'sex'           =>  $p_sex,
+            'age'           =>  $p_age,
+            'colour'        =>  $p_colour,
+            'breed'         =>  $p_breed,
+            'species'       =>  $p_species,
+            'isNeutered'    =>  $p_isNeutered,
+            'net_points'    =>  $p_netPoints );
+
+        $result = $this->helper->addPet($petArray);
+        return $result;
+    }
+
+    /**
+     * Update a pet's information
+     * @param String $p_petId Provided pet's ID
+     * @param String $p_name Provided name
+     * @param String $p_birthday Provided birthday (YYYY-MM-DD)
+     * @param String $p_sex Provided sex
+     * @param Integer $p_age Provided age
+     * @param String $p_colour Provided colour
+     * @param String $p_breed Provided breed
+     * @param String $p_species Provided species
+     * @param Boolean $p_isNeutered Provided isNeutered
+     * @return Boolean Returns true if successful, false otherwise
+     **/
+    public function updatePet($p_petId,$p_name,$p_birthday,$p_sex,$p_age,$p_colour,$p_breed,$p_species,$p_isNeutered){
+        $pet = array( 
+            'name'          =>  $p_name,
+            'birthday'      =>  $p_birthday,
+            'sex'           =>  $p_sex,
+            'age'           =>  $p_age,
+            'colour'        =>  $p_colour,
+            'breed'         =>  $p_breed,
+            'species'       =>  $p_species,
+            'isNeutered'    =>  $p_isNeutered);
+        $result = $this->helper->updatePet($p_petId,$pet);
+        return $result;
+
+    }
+
+    /**
+     * Delete a pet from an owner's account by email and pet id
+     * @param String $p_email Provided email (owner_id)
+     * @param String $p_petId Provided Pet's ID
+     * @return Boolean Returns true if successful, false otherwise
+     */
+    public function deletePet($p_email,$p_petId){
+        return $this->helper->deletePet($p_email,$p_petId);
+    }
+
+	/**
+	 * Translates key values in associative array providing values for
+	 * pet model from "client side" camelCase style to the keys
+	 * used by the db.
+	 * @param Array $petDef Associate array providing values for patient model with key values in the format expected/provided by the client side
+	 * @return Array An associate array as described above.
+	 */
+	function petToDbArray($petDef) {
+		return array(
+			'pet_id' 	    => 	$petDef['petId'],
+			'birthday' 	    =>	$petDef['petBirthday'],
+			'pet_name'      =>	$petDef['petName'],
+			'sex' 		    =>	$petDef['petSex'],
+			'age' 		    =>	$petDef['petAge'],
+			'colour'	    => 	$petDef['petColour'],
+			'breed' 	    =>	$petDef['petBreed'],
+			'species' 	    =>	$petDef['petSpecies'],
+            'isNeutered'    =>	$petDef['petNs'],
+            'netPoints'     =>  $petDef['petNetPoints']
+		);
+	}
+
+	/**************************************************************************
+    *
+    *    Interest Record Methods
+    *
+    /**************************************************************************/
+
+	/**
+     * Gets all interest records object info based on pet ID
+     * @param String $pet_id Provided Pet's ID
+	 * @return Array An array of interest objects related to the Pet's ID
+	 */
+	public function getInterestRecord($p_pet_id){
+		$result = $this->helper->getInterestRecord($p_pet_id);
+        $array = array();
+        if($result != null){
+            for($i=0;$i<sizeof($result);$i++){
+                $interestRecord = new InterestRecord();
+                $interest = $this->getInterest($result[$i]['interest_id']);
+                
+				if ($interest->getCategory() != null) {
+					$category = $this->getCategory($interest->getCategory()
+					  ->getCategoryId());
+				}
+			    $interestRecord->setInfo($result[$i],$interest,$category);
+			    array_push($array,$interest);
+            }
+            return $array;
+        }else{
+            return null;
+        }
+    }
+
+    /**
+     * Use the given pet id and interest id to add a interest record
+     * @param String $p_pet_id Provided Pet's ID
+     * @param String $p_interest_id Provided Interest's ID
+     * @return String|Boolean Returns the concatenation of both Pet and Interest ID if successful, return null otherwise
+     */
+	public function addInterestRecord($p_pet_id,$p_interest_id){
+		$result = $this->helper->addInterestRecord($p_pet_id,$p_interest_id);
+		return $result;
+	}
+    
+    /**
+     * Delete a interest record based on pet id and interest id
+     * @param String $p_pet_id Provided Pet's ID
+     * @param String $p_interest_id Provided Interest's ID
+     * @return Boolean Returns true if successful, false otherwise
+     */
+	public function deleteInterestRecord($p_pet_id,$p_interest_id){
+        $result = $this->helper->deleteInterestRecord($p_pet_id,$p_interest_id);
+        return $result;
+	}
+
+    /**************************************************************************
+    *
+    *    Interest Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get all interest objects
+     * @return Array Array of Interest Objects
+     */
+    public function getAllInterest(){
+    	$resultInterest = $this->helper->getAllInterest();
+    	$array = array();
+    	for($i=0;$i<sizeof($resultInterest);$i++){
+    		$interest = new Interest();
+    		$interest->setInfo($resultInterest[$i]);
+    		array_push($array, $interest);
+    	}
+    	return $array;
+    }
+
+	/**
+	 * Get a specific interest object
+	 * @param  String $p_interest_id Provided Interest ID
+	 * @return Object Interest Model Object
+	 */
+	public function getInterest($p_interest_id){
+        $result = $this->helper->getInterest($p_interest_id);
+        if($result!= null){
+            $interest = new interest();
+            $interest->setInfo($result);
+            return $interest;
+        }else{
+            return null;
+        }
+	}
+
+	/**
+	 * Adds an interest into the db
+	 * @param  String] $p_interest_description Provided Interest description
+	 * @param  String $p_category_id Provided category ID
+	 * @return String|Boolean Returns Interest ID if inserted successfully, null otherwise
+	 */
+	public function addInterest($p_interest_description,$p_category_id,$p_interest_src){
+		$result = $this->helper->addInterest($p_interest_description,$p_category_id,$p_interest_src);
+		if($result!=null){
+            return $result;
+        }else{
+            return null;
+        }
+	}
+
+	/**
+	 * Deletes an interest from the database
+	 * @param  String $p_interest_id Provided interest ID
+	 * @return Boolean Returns true if deleted successfully, false otherwise
+	 */
+	public function deleteInterest($p_interest_id){
+		$result = $this->helper->deleteInterest($p_interest_id);
+		return $result;
+	}
+
+	/**
+	 * Edits an interest description from the database
+	 * @param  String $p_interest_id Provided interest ID
+	 * @param  String $p_interest_description Provided new interest Description
+	 * @return Boolean Returns true if updated successfully, false otherwise
+	 */
+	public function editInterestDescription($p_interest_id,$p_interest_description){
+		$result = $this->helper->editInterestDescription($p_interest_id,$p_interest_description);
+		return $result;
+	}
+
+	/**
+	 * Edits an interest src from the database
+	 * @param  String $p_interest_id Provided interest ID
+	 * @param  String $p_interest_src Provided new interest src
+	 * @return Boolean Returns true if updated successfully, false otherwise
+	 */
+	public function editInterestSrc($p_interest_id,$p_interest_src){
+		$result = $this->helper->editInterestSrc($p_interest_id,$p_interest_src);
+		return $result;
+	}
+
+	/**
+	 * Edits an interest category ID from the database
+	 * @param  String $p_interest_id Provided interest ID
+	 * @param  String $p_interest_category Provided new interest Category ID
+	 * @return Boolean Returns true if updated successfully, false otherwise
+	 */
+	public function editInterestCategory($p_interest_id, $p_interest_category){
+		$result = $this->helper->editInterestCategory($p_interest_id, $p_interest_category);
+		return $result;
+	}
+
+    /**************************************************************************
+    *
+    *    Category Methods
+    *
+    /**************************************************************************/
+
+	/**
+	 * Get all category objects
+	 * @return Array An array of all Category Objects
+	 */
+    public function getAllCategory(){
+    	$result = $this->helper->getAllCategory();
+    	$array = array();	
+    	for($c=0;$c<sizeof($result);$c++){
+    		$category = new Category();
+    		$category->setInfo($result[$c]);
+    		array_push($array, $category);
+    	}
+    	return $array;
+    }
+
+	/**
+	 * Get a specific category object
+	 * @param  String $p_category_id Provided Category ID
+	 * @return Object Category Object
+	 */
+	public function getCategory($p_category_id){
+		$result = $this->helper->getCategory($p_category_id);
+		
+		if($result != null){
+			$category = new Category();
+			$category->setInfo($result);
+			return $category;
+		}else{
+			return null;
+		}
+	}
+
+	/**
+	 * Adds a category into the database
+	 * @param  String $p_category_description Provided category description
+	 * @return String|Boolean Returns Category ID if inserted successfully, null otherwise
+	 */
+	public function addCategory($p_category_description){
+		$result = $this->helper->addCategory($p_category_description);
+		return $result;
+	}
+
+	/**
+	 * Deletes a category from the database
+	 * @param  String $p_category_id Provided category ID
+	 * @return Boolean Returns true if deleted successfully, false otherwise
+	 */
+	public function deleteCategory($p_category_id){
+		$result = $this->helper->deleteCategory($p_category_id);
+		return $result;
+	}
+	
+    /**************************************************************************
+    *
+    *    Picture Methods
+    *
+    /**************************************************************************/
+
+	/**
+	 * Gets all picture object info based on pet ID
+     * @param String $p_pet_id Provided the Pet's ID
+	 * @return Array An array of picture objects
+	 */
+	public function getPictures($p_pet_id){
+		$result = $this->helper->getAllPictureInfo($p_pet_id);
+		$array = array();
+		for($i=0;$i<sizeof($result);$i++){
+			$picture = new Picture();
+			$picture->setInfo($result[$i]);
+			array_push($array,$picture);
+		}
+		return $array;
+	}
+
+	 /**
+     * Add a picture for a specific pet
+     * @param String $p_pet_id Provided pet's ID
+     * @param String $p_path   Provided picture path
+     * @param String $p_description  Provided description of the picture
+     * @return String|Boolean Returns a unique Picture ID if successful, return null otherwise
+     */
+    public function addPicture($p_pet_id, $p_path, $p_description){
+        return $this->helper->addPicture($p_pet_id,$p_path,$p_description);
+    }
+        
+    /**
+     * Delete a picture from a pet
+     * @param String $p_petId Provided Pet's ID
+     * @param String $p_picId Provided Picture's ID
+     * @return Boolean True if deleted successful, false otherwise
+	 */
+    public function deletePicture($p_petId,$p_picId){
+        return $this->helper->deletePicture($p_petId,$p_picId);
+    }
+
+	/** 
+	 * Update a pet's photo likes by 1
+	 * @param  String $p_pet_id Provided Pet's ID
+ 	 * @param  String $p_pic_id Provided Picture's ID
+	 * @return Boolean True if updated successful, false otherwise
+	 */
+	public function updatePictureLikes($p_pet_id, $p_pic_id){
+		return $this->helper->updatePictureLikes($p_pet_id, $p_pic_id);
+	}
+	
+	/** 
+	 * Update a pet's photo views by 1
+	 * @param  String $p_pet_id Provided Pet's ID
+ 	 * @param  String $p_pic_id Provided Picture's ID
+	 * @return Boolean True if updated successful, false otherwise
+	 */
+	public function updatePictureViews($p_pet_id, $p_pic_id){
+		return $this->helper->updatePictureViews($p_pet_id, $p_pic_id);
+	}
+
+    /**
+     * Update a pet's picture's description 
+     * @param Array $p_picture An associative Array that contains description, petId, and picId
+     * @return Boolean True if updated successful, false otherwise
+	 */
+    public function updatePictureDescription($p_picture){
+        return $this->helper->updatePictureDescription($p_picture);
+    }
+
+
+    /**************************************************************************
+    *
+    *    Clinic Methods
+    *
+    /**************************************************************************/
+
+   	/**
+	 * Gets all clinic object info
+	 * @return Array An array of clinic objects
+	 */
+	public function getClinics(){
+		$result = $this->helper->getAllClinicInfo();
+		$array = array();
+		for($i=0;$i< sizeof($result); $i++){
+			$clinic = new Clinic();
+			$clinic->setInfo($result[$i]);
+			array_push($array,$clinic);
+		}
+		return $array;
+	}
+
+	/**
+     * Get the password and salt for a specific clinic by email
+     * @param String $p_email Provided clinic email
+     * @return Array An array of password,salt, and active if the email 
+     * exists,else returns null.
+     */
+    public function checkClinicAccount($p_email){
+        return $this->helper->checkClinicAccount($p_email);
+    }
+
+    /**
+     * Given array of clinic info, create a new clinic and return clinic id
+     * @param Array $p_clinic_array Provided an associative array that contains all the clinic info
+     * @return String|Boolean The Clinic's ID if successful, null otherwise
+     */
+    public function createClinic($p_clinic_array){
+        return $this->helper->createClinic($p_clinic_array);
+    }
+    
+     /**
+     * @deprecated
+     * Get an clinic object when supplied a clinic id
+     * @param String $p_clinic_id Provided clinic id
+     * @return Object|Boolean Returns a clinic object if found, otherwise returns null
+     */
+    public function getClinicObject($p_clinic_id){
+        $result = $this->helper->getClinicById($p_clinic_id);
+        $clinic = new Clinic();
+        if($result != null){
+            return $clinic;
+        }else{
+            return null;
+        }
+    }
+
+    /**************************************************************************
+    *
+    *    Pet Owner Methods
+    *
+    /**************************************************************************/
+
+	/**
+	 * Translates key values in associative array providing values for
+	 * patient owner model from "client side" camelCase style to the keys
+	 * used by the db.
+	 * @param Array $ownerDef An associate array providing values for patient owner model with key values in the format expected/provided by the client side
+	 * @return Array An associate array as described above.
+	 */
+	function ownerToDbArray($ownerDef) {
+		$dbArray = array(
+			'patient_id' 	=>	$ownerDef['patientId'],
+			'clinic_id' 	=> 	$ownerDef['clinicId'],
+			'firstname' 	=>	$ownerDef['ownerFirstName'],
+			'lastname' 		=>	$ownerDef['ownerLastName'],
+			'address' 		=>	$ownerDef['ownerAddress'],
+			'city' 			=>	$ownerDef['ownerCity'],
+			'province' 		=>	$ownerDef['ownerProvince'],
+			'postal_code' 	=>	$ownerDef['ownerPostalCode'],
+			'home_number'	=>	$ownerDef['ownerHomeNumber'],
+			'cell_number' 	=>	$ownerDef['ownerCellNumber'],
+			'email' 		=>	$ownerDef['ownerEmail'],
+			'hasOptedIn'	=>	$ownerDef['ownerPs']
+		);
+
+		// Add owner id separately as it is not always the case that it will be
+		// passed from the front-end (that is, in cases of edits and deletes it
+		// will be, but in the case of creation it will not be)
+		if (isset($ownerDef['ownerId'])) {
+			$dbArray['owner_id'] = $ownerDef['ownerId'];
+		}
+
+		return $dbArray;
+    }
+
+	/** 
+     * @deprecated
+	 * Get patient owner information
+	 * @param  String $p_clinic_id  Provided Clinic ID
+	 * @param  String $p_patient_id Provided Patient ID
+	 * @return Object|Boolean  Patient Owner object if successful, else returns null
+	 */
+	public function getPatientOwnerObject($p_clinic_id, $p_patient_id){
+		$result =  $this->helper->getOwnerInfo($p_clinic_id, $p_patient_id);
+		if($result['count']==1){
+			$owner = new PatientOwner();
+			$owner->setInfo($result);
+			return $owner;
+		}else{
+			return null;
+		}
+	}
+
+    /**************************************************************************
+    *
+    *    Achievement Set Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get achievement set information
+     * @param  String $p_achievement_id  Provided achievement ID
+     * @return Object Achievement Set Object with fields
+     */
+    public function getAchievementSet($p_achievement_id){
+        $result = $this->helper->getAchievementSet($p_achievement_id);
+        if($result!= null){
+            $achievementSet = new AchievementSet();
+            $achievementSet->setInfo($result);
+            return $achievementSet;
+        }else{
+            return null;
+        }
+    }
+
+    /**
+     * Get all achievement set objects
+     * @return Array An array of AchievementSet Objects
+     */
+    public function getAllAchievementSet(){
+        $resultAchievementSet = $this->helper->getAllAchievementSet();
+        $array = array();
+        for($i=0;$i<sizeof($resultAchievementSet);$i++){
+            $set = new AchievementSet();
+            $set->setInfo($resultAchievementSet[$i]);
+            array_push($array, $set);
+        }
+        return $array;
+    }
+
+    /**************************************************************************
+    *
+    *    Achievement Methods
+    *
+    /**************************************************************************/
+
+	/**
+	 * Get achievement record information
+	 * @param  String $p_achievement_id  Provided Achievement's ID
+	 * @param  String $p_pet_id 		 Provided Pet's ID
+	 * @return Object|Boolean            Achievement Record Object if successful, else returns null
+	 */
+	public function getAchievementRecordObject($p_achievement_id, $p_pet_id){
+		$result =  $this->helper->getAchievementRecordInfo($p_achievement_id, $p_pet_id);
+		if(count($result)>=1){
+			$achievementRecord = new AchievementRecord();
+			$achievementRecord->setInfo($result[0]);
+			return $achievementRecord;
+		}else{
+			return null;
+		}
+	}
+
+	/**
+	 * Add achievement record information
+	 * @param  String $p_achievement_id  Provided Achievement ID
+	 * @param  String $p_pet_id 		Provided Pet ID
+	 * @param  String $p_vet_id       Provided Vet ID
+	 * @param  Integer $p_points 		    Provided Points
+	 * @return Boolean  True if added successfully, else false          
+	 */
+	public function addAchievements($p_achievement_id,$p_pet_id,$p_vet_id,$p_points){
+		$result = $this->helper->addAchievementRecord($p_achievement_id,$p_pet_id,$p_vet_id,$p_points);
+		return $result;
+	}
+
+}	
+?>
+

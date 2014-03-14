@@ -1,0 +1,54 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+require_once $root . '/../sys/utils/image_utils.php';
+
+class InterestRecordController implements RouteController {
+
+  private $mc;
+  private $app;
+
+  public function __construct() {
+    $this->mc = new ModelController();
+    $this->app = Slim\Slim::getInstance();
+  }
+
+
+  public function index(&$args) {
+  }
+
+  public function create(&$args) {
+
+    // TODO: authorize action
+
+    $id = $args['interest']['id'];
+    $ret = $this->mc->addInterestRecord($args['pet'], $id);
+    echo json_encode(array(
+        'id' => $ret,
+      )
+    );
+  }
+
+  public function show(&$args) {
+
+
+  }
+
+  public function update(&$args) {
+
+  }
+  public function destroy(&$args) {
+    $id = $args['id'];
+
+    // TODO: authorize action
+    $ret = $this->mc->deleteInterestRecord($id);
+    echo json_encode(array('id' => $ret));
+
+  }
+
+}
+
+?>
