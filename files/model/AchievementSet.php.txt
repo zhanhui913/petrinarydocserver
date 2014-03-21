@@ -31,7 +31,6 @@ class AchievementSet implements JsonSerializable{
     /**
      * Getters
      */
-
     public function getName() {
         return $this->achievementSetName;
     }
@@ -45,7 +44,6 @@ class AchievementSet implements JsonSerializable{
     /**
      * Setters
      */
-
     public function setName($p_achievement_name) {
         $this->achievementSetName = $p_achievement_name;
     }

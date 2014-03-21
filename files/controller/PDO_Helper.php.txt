@@ -1909,6 +1909,7 @@ class PDOHelper{
      * @param String $p_pet_id Pet ID
      * @param String $p_achievement_id Achievement ID
      * @param String $p_clinic_id Clinic ID
+     * @param String $p_points Multiplier
      * @return boolean $result Returns true if successful, false otherwise 
      */
     public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){

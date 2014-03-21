@@ -1104,9 +1104,11 @@ class ModelController {
 
     /**
      * Get latest achievement record for a pet
+     * @param  String $p_achievement_id Provided Achievement's ID
      * @param  String $p_pet_id Provided Pet's ID
-     * @return Array Array of Achievement Record Objects if successful, else returns null
+     * @return Object|Boolean Achievement Record Object if successful, else returns null
      */
+
     public function getLatestAchievementRecordsForPet($p_pet_id){
 
         $resultArray = array();
@@ -1132,12 +1134,6 @@ class ModelController {
         return $resultArray;
     } 
 
-    /**
-     * Get an achievement record by pet ID and achievement ID
-     * @param String $p_pet_id Pet ID.
-     * @param String $p_achievement_id Achievement ID.
-     * @return Array Returns array of achievement record attributes if successful,else null.
-     */
     public function getAchievementRecord($p_pet_id,$p_achievement_id){
 
         $result = $this->helper->getAchievementRecord($p_pet_id,$p_achievement_id);
@@ -1153,13 +1149,11 @@ class ModelController {
          
         return null;
     }
-
     /**
-     * Add a new achievement record for a pet
-     * @param String $p_pet_id Pet ID
-     * @param String $p_achievement_id Achievement ID
-     * @param String $p_clinic_id Clinic ID
-     * @return boolean $result Returns true if successful, false otherwise 
+     * Add achievement record information
+     * @param String $p_set_id Provided Set ID
+     * @param String $p_pet_id Provided Pet ID
+     * @return Boolean Returns True if added successfully, else false          
      */
     public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){
         $result = $this->helper->addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id);
@@ -1177,12 +1171,6 @@ class ModelController {
         return null;
     }
 
-    /**
-     * Delete an achievement record based on pet ID and set ID
-     * @param String $p_pet_id Pet ID
-     * @param String $p_set_id Set ID
-     * @return Boolean Returns true if it is deleted successfully,else false
-     */
     public function deleteAchievementRecord($p_pet_id,$p_achievement_id){
 
         return $this->helper->deleteAchievementRecord($p_pet_id,$p_achievement_id);

@@ -14,15 +14,7 @@ class AchievementRecord implements JsonSerializable{
      * The date of last update 
      */
     private $date;
-
-    /**
-     * Clinic Id
-     */
     private $clinicId;
-
-    /**
-     * Points
-     */
     private $points;
 
     /**
