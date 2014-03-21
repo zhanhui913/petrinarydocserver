@@ -275,6 +275,30 @@ class PDOHelper{
 
         return false;
     }
+
+    /** 
+     * Update the given owner's pic_path.
+     * @param String $p_email The id of the owner who's pic_path is to be updated.
+     * @param String $p_pic_path The pic_path value to replace the old.
+     * @return boolean $result Return true on success, false otherwise.
+     */
+    public function updateOwnerAvatar($p_email, $p_pic_path) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE OWNER ".
+            "SET pic_path = ? ".
+            "WHERE email = ?;");
+        $stmt->bindParam(1,$p_pic_path);
+        $stmt->bindParam(2,$p_email);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;        
+    }
     
     /**
      * Update the username for a specific pet owner by email.
@@ -361,12 +385,13 @@ class PDOHelper{
      * Get all the pet id for a specific owner.
      * @param String $p_email Owner email
      * @return Array $result Returns an array of pet id, null otherwise.
+     * TODO: remove actve=1 from query below after sprint 4
      */
     public function getAllPetId($p_email){
         $stmt = $this->adapter->conn->prepare(
             "SELECT pet_id ".
             "FROM PET ".
-            "WHERE owner_id = ?;");
+            "WHERE active = 1 AND owner_id = ?;");
         $stmt->bindParam(1,$p_email);
         
         $result = null;
@@ -394,7 +419,9 @@ class PDOHelper{
             "colour = ?, ".
             "breed = ?, ".
             "species = ?, ".
-            "isNeutered = ? ".
+            "isNeutered = ?, ".
+            "clinic_id = ?, ".
+            "active = ? ".
             "WHERE pet_id = ?;");
         $stmt->bindParam(1,$p_pet['name']);
         $stmt->bindParam(2,$p_pet['birthday']);
@@ -404,7 +431,9 @@ class PDOHelper{
         $stmt->bindParam(6,$p_pet['breed']);
         $stmt->bindParam(7,$p_pet['species']);
         $stmt->bindParam(8,$p_pet['isNeutered']);
-        $stmt->bindParam(9,$p_petId);
+        $stmt->bindParam(9,$p_pet['clinic_id']);
+        $stmt->bindParam(10,$p_pet['active']);
+        $stmt->bindParam(11,$p_petId);
 
         $result = null;
         try{
@@ -438,6 +467,8 @@ class PDOHelper{
             "?,".
             "?,".
             "?,".
+            "?,".
+            "?,".
             "?);");
         $stmt->bindParam(1,$p_pet['name']);
         $stmt->bindParam(2,$p_pet['pet_id']);
@@ -450,7 +481,8 @@ class PDOHelper{
         $stmt->bindParam(9,$p_pet['species']);
         $stmt->bindParam(10,$p_pet['isNeutered']);
         $stmt->bindParam(11,$p_pet['net_points']);
-
+        $stmt->bindParam(12,$p_pet['clinic_id']);
+        $stmt->bindParam(13,$p_pet['active']);
         $result=null;
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
@@ -465,21 +497,21 @@ class PDOHelper{
     }
 
     /**
-     * Delete a pet from an owner's account by using email and pet id.
+     * Delete a pet from an owner's account by using email and pet id. (Disable active bit)
      * @param String $p_email Owner email
      * @param Stirngs $p_petId Pet id
      * @return boolean Returns true if is deleted successfully,else false
      */
     public function deletePet($p_email,$p_petId){
         $stmt =  $this->adapter->conn->prepare(
-            "DELETE FROM PET ".
+            "UPDATE PET SET ".
+            "active = 0 ".
             "WHERE owner_id = ? AND pet_id = ?;"
         );
-            
+        
         $stmt->bindParam(1,$p_email);
         $stmt->bindParam(2,$p_petId);
 
-        $result=null;
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
@@ -491,6 +523,43 @@ class PDOHelper{
 
         return false;
     }
+
+    /**
+     * Get all pets (Active & Inactive)
+     * @return Array Returns an array of all pets
+     */
+    public function getAllPets(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM PET ;");
+        try{
+             $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Get all active pets only
+     * @return Array Returns an array of active pets
+     */
+    public function getAllActivePets(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM PET ".
+            "WHERE active = 1;");
+        try{
+             $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;   
+    }
+
+
 
     /**************************************************************************
     *
@@ -619,7 +688,7 @@ class PDOHelper{
 
     /**
      * Adds an interest into the db
-     * @param String $p_interest_name The Interest description
+     * @param String $p_interest_name The Interest name
      * @param String $p_category_id The category ID
      * @param String $p_interest_src Path to location at which the image associated with this interest is stored.
      * @return String $uuid Returns a UUID if successful, else returns null
@@ -735,7 +804,6 @@ class PDOHelper{
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
-            echo "00000";
             return false;
         }
 
@@ -1029,45 +1097,131 @@ class PDOHelper{
         return $result;
     }
 
+	/**
+     * Get a clinic info by id
+     * @return Array $result List of clinic details
+     */
+    public function getClinicById($p_clinic_id){
+        $stmt = $this->adapter->conn->prepare("SELECT * FROM CLINIC WHERE clinic_id = ?"); 
+	$stmt->bindParam(1, $p_clinic_id); 
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt)[0];
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+
+	/**
+     * Get a clinics information from the DB
+     * @return Array $result List of clinic details
+     */
+    public function getHomeClinic($p_pet_id){
+        $stmt = $this->adapter->conn->prepare("SELECT c.* FROM CLINIC c JOIN PET p on c.clinic_id = p.clinic_id WHERE p.pet_id = ?");  
+	$stmt->bindParam(1, $p_pet_id);
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        if ($result != null) return $result[0];
+        return null;    
+    }
+
+
+    /**
+     *
+     *
+     */
+    public function updateClinicPassword($p_clinic_array) {
+        $stmt = $this->adapter->conn->prepare("UPDATE CLINIC SET ".
+        "pass = ?, " .
+        "salt = ? " .
+        "WHERE clinic_id = ?;");
+        $stmt->bindParam(1, $p_clinic_array['password']);
+        $stmt->bindParam(2, $p_clinic_array['salt']);
+        $stmt->bindParam(3, $p_clinic_array['clinic_id']);
+
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            echo $e;
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Update clinic info
-     * @param Object $p_clinic A clinic object
+     * @param Object $p_clinic_array A clinic array
      * @return Boolean $result Returns true if successful, false otherwise
      */
-    public function updateClinicInfo($p_clinic){ 
+    public function updateClinicInfo($p_clinic_array){ 
 
         $stmt = $this->adapter->conn->prepare("UPDATE CLINIC SET ".
-        "clinic_name = ?, " . 
-        "clinic_addr = ?, " .
-        "post_code = ?, " .
-        "latitude = ?, " .
-        "longtitude = ?, " .
-        "province = ?, " .
+        "name = ?, " . 
+        "address = ?, " .
         "city = ?, " .
+        "province = ?, " .
+        "postal_code = ?, " .
+        "latitude = ?, " .
+        "longitude = ?, " .
         "email = ?, " .
         "website = ?, " .
         "contact_person = ?, ".
-        "active = ?, " .
+        "phone = ?, " .
         "expiration = ?, " .
-        "pass = ?, " .
-        "salt = ?, " .
+        "active = ? " .
         "WHERE clinic_id = ?;");
 
-        $stmt->bindParam(1,$p_clinic->getClinicName());
-        $stmt->bindParam(2,$p_clinic->getClinicAddress());
-        $stmt->bindParam(3,$p_clinic->getPostCode());
-        $stmt->bindParam(4,$p_clinic->getLatitude());
-        $stmt->bindParam(5,$p_clinic->getLongtitude());
-        $stmt->bindParam(6,$p_clinic->getProvince());
-        $stmt->bindParam(7,$p_clinic->getCity());
-        $stmt->bindParam(8,$p_clinic->getEmail());
-        $stmt->bindParam(9,$p_clinic->getWebsite());
-        $stmt->bindParam(10,$p_clinic->getContactPerson());
-        $stmt->bindParam(11,$p_clinic->getActiveStatus());
-        $stmt->bindParam(12,$p_clinic->getExpirationDate());
-        $stmt->bindParam(13,$p_clinic->getClinicId());
-        $stmt->bindParam(14,$p_clinic->getPass());
-        $stmt->bindParam(15,$p_clinic->getSalt());
+        $stmt->bindParam(1,$p_clinic_array['name']);
+        $stmt->bindParam(2,$p_clinic_array['address']);
+        $stmt->bindParam(3,$p_clinic_array['city']);
+        $stmt->bindParam(4,$p_clinic_array['province']);
+        $stmt->bindParam(5,$p_clinic_array['postal_code']);
+        $stmt->bindParam(6,$p_clinic_array['latitude']);
+        $stmt->bindParam(7,$p_clinic_array['longitude']);
+        $stmt->bindParam(8,$p_clinic_array['email']);
+        $stmt->bindParam(9,$p_clinic_array['website']);
+        $stmt->bindParam(10,$p_clinic_array['contact_person']);
+        $stmt->bindParam(11,$p_clinic_array['phone']);
+        $stmt->bindParam(12,$p_clinic_array['expiration']);
+        $stmt->bindParam(13,strval($p_clinic_array['active']));
+        $stmt->bindParam(14,$p_clinic_array['clinic_id']);
+
+        $result=null;
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            echo $e;
+            return false;
+        }
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update the clinic active bit to 0
+     * @param ID $p_clinic_id A clinic Id
+     * @return Boolean $result Returns true if successful, false otherwise
+     */
+    public function deleteClinic($p_clinic_id){ 
+
+        $stmt = $this->adapter->conn->prepare("UPDATE CLINIC SET ".
+        "active = 0 " .
+        "WHERE clinic_id = ?;");
+
+        $stmt->bindParam(1,$p_clinic_id);
+
         $result=null;
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
@@ -1114,6 +1268,8 @@ class PDOHelper{
      */
     public function createClinic($p_clinic_array){
     	$id = $this->v4();
+        //Default active is set to 1
+        $active = 1;
         $stmt = $this->adapter->conn->prepare("INSERT INTO CLINIC (".
         "name, " . 
         "clinic_id, " .
@@ -1121,7 +1277,7 @@ class PDOHelper{
         "city, " .
         "province, " .
         "latitude, " .
-        "longtitude, " .
+        "longitude, " .
         "email, " .
         "website, " .
         "contact_person, ".
@@ -1129,8 +1285,9 @@ class PDOHelper{
         "active, " .
         "expiration, " .
         "pass, " .
-        "salt) " .
-        " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" .
+        "salt, " .
+        "postal_code) ".
+        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" .
         ";");
         $stmt->bindParam(1,$p_clinic_array['name']);
         $stmt->bindParam(2,$id);
@@ -1138,15 +1295,16 @@ class PDOHelper{
         $stmt->bindParam(4,$p_clinic_array['city']);
         $stmt->bindParam(5,$p_clinic_array['province']);
         $stmt->bindParam(6,$p_clinic_array['latitude']);
-        $stmt->bindParam(7,$p_clinic_array['longtitude']);
+        $stmt->bindParam(7,$p_clinic_array['longitude']);
         $stmt->bindParam(8,$p_clinic_array['email']);
         $stmt->bindParam(9,$p_clinic_array['website']);
         $stmt->bindParam(10,$p_clinic_array['contact_person']);
         $stmt->bindParam(11,$p_clinic_array['phone']);
-        $stmt->bindParam(12,$p_clinic_array['active']);
+        $stmt->bindParam(12,$active);
         $stmt->bindParam(13,$p_clinic_array['expiration']);
         $stmt->bindParam(14,$p_clinic_array['pass']);
         $stmt->bindParam(15,$p_clinic_array['salt']);
+        $stmt->bindParam(16,$p_clinic_array['postal_code']);
         $result=null;
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
@@ -1219,7 +1377,7 @@ class PDOHelper{
     /** 
      * Get a achievement set based on achievement ID
      * @param String $p_achievement_id The achievement ID
-     * @return Array $result Returns the achievement ID ,else null
+     * @return Array Returns the achievement ID ,else null
      */
     public function getAchievementSet($p_achievement_id){
         $stmt = $this->adapter->conn->prepare("SELECT * ".
@@ -1236,7 +1394,7 @@ class PDOHelper{
 
     /** 
      * Get a list of all the achievement sets
-     * @return Array $result Returns an array of achievement ID,else null
+     * @return Array Returns an array of achievementSet info,else null
      */
     public function getAllAchievementSet(){
         $stmt = $this->adapter->conn->prepare("SELECT * ".
@@ -1249,13 +1407,210 @@ class PDOHelper{
         return $result;
     }
 
+
+    /**
+     * Adds an achievement set into the db
+     * @param String $p_achievementSet_name The achievementSet Name
+     * @param String $p_achievementSet_description The achievementSet description
+     * @return String $uuid Returns a UUID if successful, else returns null
+     */
+    public function addAchievementSet($p_achievementSet_name,$p_achievementSet_description){
+        $uuid = $this->v4();
+        
+        $stmt = $this->adapter->conn->prepare(
+        "INSERT INTO ACHIEVEMENT_SET(name,description,id) ".
+        "VALUES( ".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$p_achievementSet_name);
+        $stmt->bindParam(2,$p_achievementSet_description);
+        $stmt->bindParam(3,$uuid);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        //If successfully inserted, return the UUID, else return null
+        if($result > 0) {
+            return $uuid;
+        }
+        return null;  
+    }
+
+    /**
+     * Deletes an achievementSet from the database
+     * @param String $p_achievement_id The achievement ID
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function deleteAchievementSet($p_achievement_id){
+        
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM ACHIEVEMENT WHERE ".
+            "id = ?;");
+        $stmt->bindParam(1,$p_achievement_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update an achievementSet description
+     * @param String $p_achievementSet_id The achievementSet ID
+     * @param String $p_achievementSet_description The achievementSet description
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementSetDescription($p_achievementSet_id,$p_achievementSet_description){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT_SET SET DESCRIPTION=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievementSet_description);
+        $stmt->bindParam(2,$p_achievementSet_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+   /**
+     * Update an achievementSet name
+     * @param String $p_achievementSet_id The achievementSet ID
+     * @param String $p_achievementSet_name The achievementSet name
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementSetName($p_achievementSet_id,$p_achievementSet_name){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT_SET SET NAME=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievementSet_name);
+        $stmt->bindParam(2,$p_achievementSet_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+
     /**************************************************************************
     *
     *    Achievement Methods
     *
     /**************************************************************************/
 
+    /**
+     * Get the first achievement for an achievmentSet
+     * @param String $p_set_id The achievementSet ID
+     * @return Array The first achievement information
+     */
+    public function getFirstAchievementForSet($p_set_id){
+
+        $position = 1;
+
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
+            "ON A.set_id = S.id ".
+            "WHERE A.position = ? AND A.set_id = ?;");
+
+        $stmt->bindParam(1,$position);
+        $stmt->bindParam(2,$p_set_id);
+        
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result[0];
+
+    }
     /** 
+     * Get a array of information for an achievement
+     * @param String $p_achievement_id The Achievement ID
+     * @return Array Achievement Info Array
+     */
+    public function getAchievement($p_achievement_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
+            "ON A.set_id = S.id ".
+            "WHERE A.id = ?;");
+        $stmt->bindParam(1,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        if($result == null){
+
+            return array();
+        }
+        
+        return $result[0];
+    }
+
+    /** 
+     * Get a array of all achievement information
+     * @return Array Achievement Info Array for all achievements
+     */
+    public function getAllAchievements(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
+            "ON A.set_id = S.id;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /** 
+     * Get a list of achievements for an achievementSet
+     * @param String $p_achievementSet_id The AchievementSet ID
+     * @return Array Achievement infor array for a set
+     */
+    public function getAllAchievementForSet($p_achievementSet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
+            "ON A.set_id = S.id ".
+            "WHERE A.set_id = ?;");
+        $stmt->bindParam(1,$p_achievementSet_id);
+        
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /** (Possibly deprecated)
      * Check the achievement id if it exists
      * @param String $p_achievement_id The Achievement ID
      * @return Array $result achievement Id if exists, else null
@@ -1266,30 +1621,250 @@ class PDOHelper{
             "FROM ACHIEVEMENT ".
             "WHERE achievement_id = ?;");
         $stmt->bindParam(1,$p_achievement_id);
-        $result = $this->adapter->executeFetchPrepared($stmt);
-        return $result;
-    }
-
-    /** 
-     * Get all the achievement records based on achievement ID and pet ID
-     * @param String $p_achievement_id Achievement ID
-     * @param String $p_pet_id Pet ID
-     * @return Array $result Returns all the achievement records, else null
-     */
-    public function getAchievementRecordInfo($p_achievement_id, $p_pet_id){
-        $stmt = $this->adapter->conn->prepare(
-            "SELECT A.* , B.achievement_name, B.description". 
-            " FROM ACHIEVEMENT_RECORD A join ACHIEVEMENT B on A.achievement_id = B.achievement_id".
-            " WHERE A.achievement_id = ? and A.pet_id = ?;");
-
-        $stmt->bindParam(1,$p_achievement_id);
-        $stmt->bindParam(2,$p_pet_id);
         try{
-             $result = $this->adapter->executeFetchPrepared($stmt);
+            $result = $this->adapter->executeFetchPrepared($stmt);
         }catch(PDOException $e){
             return null;
         }
         return $result;
+    }
+
+    /**
+     * Adds an achievement into the db
+     * @param Integer $p_achievement_points The achievement points
+     * @param String $p_achievement_name The achievement name
+     * @param String $p_achievement_description The achievement description
+     * @param String $p_achievement_next The next achievement in this set
+     * @param Integer $p_achievement_total The total number of achievement in this set
+     * @param Integer $p_achievement_position The current position in this set
+     * @param String $p_achievement_setId The achievement's achievementSet's ID
+     * @return String $uuid Returns a UUID if successful, else returns null
+     */
+    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId){
+        
+        $uuid = $this->v4();
+        
+        $stmt = $this->adapter->conn->prepare(
+        "INSERT INTO ACHIEVEMENT(id,points,name,description,next,total,position,set_id) ".
+        "VALUES( ".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+        $stmt->bindParam(1,$uuid);
+        $stmt->bindParam(2,$p_achievement_points);
+        $stmt->bindParam(3,$p_achievement_name);
+        $stmt->bindParam(4,$p_achievement_description);
+        $stmt->bindParam(5,$p_achievement_next);
+        $stmt->bindParam(6,$p_achievement_total);
+        $stmt->bindParam(7,$p_achievement_position);
+        $stmt->bindParam(8,$p_achievement_setId);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        //If successfully inserted, return the UUID, else return null
+        if($result > 0) {
+            return $uuid;
+        }
+        return null;  
+    }
+
+    /**
+     * Deletes an achievement from the database
+     * @param String $p_achievement_id The achievement ID
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function deleteAchievement($p_achievementSet_id){
+        
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM ACHIEVEMENT WHERE ".
+            "id = ?;");
+        $stmt->bindParam(1,$p_achievementSet_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+
+   /**
+     * Update an achievement points
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_points The achievement points
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementPoints($p_achievement_id,$p_achievement_points){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET POINTS=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_points);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update an achievement name
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_name The achievement name
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementName($p_achievement_id,$p_achievement_name){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET NAME=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_name);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Update an achievement description
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_description The achievement description
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementDescription($p_achievement_id,$p_achievement_description){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET DESCRIPTION=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_description);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+       
+    /**
+     * Update an achievement next
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_next The achievement next
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementNext($p_achievement_id,$p_achievement_next){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET NEXT=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_next);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+      
+    /**
+     * Update an achievement total
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_total The achievement total
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementTotal($p_achievement_id,$p_achievement_total){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET TOTAL=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_total);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+       
+    /**
+     * Update an achievement position
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_position The achievement position
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementPosition($p_achievement_id,$p_achievement_position){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET POSITION=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_position);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Update an achievement SetId
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_setId The achievement setId
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function editAchievementSetId($p_achievement_id,$p_achievement_setId){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET SET_ID=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_achievement_setId);
+        $stmt->bindParam(2,$p_achievement_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
     }
 
     /** 
@@ -1323,27 +1898,168 @@ class PDOHelper{
         }
     }
 
+    /**************************************************************************
+    *
+    *    Achievement Record Methods
+    *
+    /**************************************************************************/
+
     /**
-     * Adding a new achievement to a pet
-     * @param int $p_achievement_id The specific achievement
-     * @param String $p_pet_id The pet that achieved it
-     * @param String $p_vet_id The vet (if any) that is associated with the achievement
-     * @param int $p_points The number of points the achievement carries
-     * @return boolean $result Returns true if added successfully,else false
+     * Add a new achievement record for a pet
+     * @param String $p_pet_id Pet ID
+     * @param String $p_achievement_id Achievement ID
+     * @param String $p_clinic_id Clinic ID
+     * @return boolean $result Returns true if successful, false otherwise 
      */
-    public function addAchievementRecord($p_achievement_id,$p_pet_id,$p_vet_id,$p_points){
+    public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){
+
         $stmt = $this->adapter->conn->prepare(
-            "INSERT INTO ACHIEVEMENT_RECORD(achievement_id,pet_id,vet_id,points)".
-            "VALUES(".
-            "?,".
-            "?,".
-            "?,".
-            "?);");
+            "INSERT INTO ACHIEVEMENT_RECORD(".
+            "achievement_id,".
+            "pet_id,".
+            "clinic_id,".
+            "next,".
+            "total,".
+            "position,".
+            "set_id,".
+            "points) ".
+            "SELECT A.id as achievement_id,".
+            "? AS pet_id,".
+            "? AS clinic_id,".
+            "A.next,".
+            "A.total,".
+            "A.position,".
+            "A.set_id,".
+            "A.points ".
+            "FROM ACHIEVEMENT A ".
+            "WHERE A.id = ?;");
+
+        $stmt->bindParam(1,$p_pet_id);
+        $stmt->bindParam(2,$p_clinic_id);
+        $stmt->bindParam(3,$p_achievement_id);
+
+        try{
+
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+
+        }catch(PDOException $e){
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+    
+
+    /**
+     * Delete an achievement record based on pet ID and set ID
+     * @param String $p_pet_id Pet ID
+     * @param String $p_set_id Set ID
+     * @return Boolean Returns true if it is deleted successfully,else false
+     */
+    public function deleteAchievementRecord($p_pet_id,$p_achievement_id){
+
+        $stmt = $this->adapter->conn->prepare(
+            "DELETE FROM ACHIEVEMENT_RECORD ".
+            "WHERE (achievement_id = ? OR next = ?) AND pet_id = ? ;"
+        );
+
+        $stmt->bindParam(1,$p_achievement_id);
+        $stmt->bindParam(2,$p_achievement_id);
+        $stmt->bindParam(3,$p_pet_id);
+
+        try{
+
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+
+        }catch(PDOException $e){
+            return false;
+
+        }catch(ErrorException $e) {
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Decrease the total for each achievement record by 1
+     * @param String $p_set_id Set ID
+     * @return Boolean Returns true if the operation is successful, else false
+     */
+    public function decreaseAchievementRecordTotal($p_set_id){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT_RECORD SET total = total - 1 WHERE set_id = ?;"
+        );
+
+        $stmt->bindParam($p_set_id);
+        try{
+
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+
+        }catch(PDOException $e){
+            return false;
+
+        }catch(ErrorException $e) {
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
+     * Increase the total for each achievement record by 1
+     * @param String $p_pet_id Set ID
+     * @return Boolean Returns true if the operation is successful, else false
+     */
+    public function increaseAchievementRecordTotal($p_set_id){
+
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT_RECORD SET total = total + 1 WHERE set_id = ?;"
+        );
+
+        $stmt->bindParam($p_set_id);
+        try{
+
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+
+        }catch(PDOException $e){
+            return false;
+
+        }catch(ErrorException $e) {
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update the total points for a specific cat
+     * @param String $p_achievement_id Achievement ID
+     * @param String $p_pet_id Pet ID
+     * @return Boolean Returns true if the operation is successful, else false
+     */
+    public function updatePetPoints($p_achievement_id, $p_pet_id){
+        var_dump($p_achievement_id);
+        var_dump($p_pet_id);
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE PET SET net_points = (net_points + (SELECT points FROM ACHIEVEMENT_RECORD WHERE achievement_id = ? AND pet_id = ?)) WHERE pet_id = ?".
+            ";");
         $stmt->bindParam(1,$p_achievement_id);
         $stmt->bindParam(2,$p_pet_id);
-        $stmt->bindParam(3,$p_vet_id);
-        $stmt->bindParam(4,$p_points);
-
+        $stmt->bindParam(3,$p_pet_id);
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
@@ -1352,12 +2068,201 @@ class PDOHelper{
 
         if($result > 0) {
             return true;
+
+        }
+        return false;
+
+    }
+
+    /**
+     * Get the latest achievement records for each set for a specific pet.
+     * Function will only return the set information if the pet doesn't have 
+     * any achievements for the sets that it is eligible for.
+     * @param String $p_pet_id Pet Id
+     * @return Array Returns array of achievement record array, .
+     */
+    public function getLatestAchievementRecordForPet($p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT re.id,re.name,re.description,re.pet_id,re.clinic_id,".
+            "re.total,re.position,re.dates,re.points,re.next,new.set_id,new.set_description,new.set_name ".
+            "FROM (SELECT AR.achievement_id AS id, ".
+            "A.name, ".
+            "A.description, ".
+            "AR.pet_id, ".
+            "AR.clinic_id, ".
+            "AR.total, ".
+            "AR.position AS position, ".
+            "AR.dates, ".
+            "AR.points, ".
+            "AR.next, ".
+            "AR.set_id ".
+            "FROM ACHIEVEMENT A, ".
+            "ACHIEVEMENT_SET S,".
+            "ACHIEVEMENT_RECORD AR ".
+            "WHERE AR.pet_id = ? AND AR.achievement_id = A.id ORDER BY AR.position DESC LIMIT 1) AS re ".
+            "RIGHT JOIN ".
+            "(SELECT SAS.set_id, ".
+            "S.description AS set_description, ".
+            "S.name AS set_name ".
+            "FROM PET P, SPECIES SP,SPECIES_ACHIEVEMENT_SET SAS,ACHIEVEMENT_SET S ".
+            "WHERE P.pet_id = ? AND P.species = SP.name AND SP.id = SAS.species_id AND SAS.set_id = S.id) AS new ".
+            "ON re.set_id = new.set_id ;");
+
+        $stmt->bindParam(1,$p_pet_id);
+        $stmt->bindParam(2,$p_pet_id);
+
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+
+        if($result > 0){
+            return $result;
+        }
+        return null;
+    }
+ 
+    /**
+     * Get an achievement record by pet ID and achievement ID
+     * @param String $p_pet_id Pet ID.
+     * @param String $p_achievement_id Achievement ID.
+     * @return Array Returns array of achievement record attributes if successful,else null.
+     */
+    public function getAchievementRecord($p_pet_id,$p_achievement_id){
+
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT AR.achievement_id AS id,".
+            "AR.dates,".
+            "AR.pet_id,".
+            "AR.clinic_id,".
+            "AR.points,".
+            "A.name,".
+            "A.description,".
+            "AR.next,".
+            "A.position,".
+            "AR.total,".
+            "AR.set_id,".
+            "S.name as set_name,S.description as set_description ".
+            "FROM ACHIEVEMENT A, ACHIEVEMENT_SET S,ACHIEVEMENT_RECORD AR ".
+            "WHERE AR.achievement_id = ? AND AR.pet_id = ? AND A.set_id = S.id AND AR.achievement_id = A.id ;");
+
+        $stmt->bindParam(1,$p_achievement_id);
+        $stmt->bindParam(2,$p_pet_id);
+
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+
+        }catch(PDOException $e){
+            return null;
+        }
+        if($result == 0 ){
+
+            return array();
+        }
+
+        if($result > 0){
+
+            return $result[0];
+        }
+        return null;
+    }
+
+    /**************************************************************************
+    *
+    *    Species Methods
+    *
+    /**************************************************************************/    
+
+    /**
+     * Get all species
+     * @return Array Returns array of all species
+     */
+    public function getAllSpecies(){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM SPECIES;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /**
+     * Get a specific species
+     * @param String $p_species_id The specific species ID
+     * @return Array $result Returns species info
+     */
+    public function getSpecies($p_species_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT * ".
+            "FROM SPECIES ".
+            "WHERE id=?;");
+            $stmt->bindParam(1,$p_species_id);
+
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result[0];
+    }
+
+    /**
+     * Adding a new species
+     * @param String $p_species_name The new species name
+     * @return Boolean|String $result Returns ID if added successfully,else null
+     */
+    public function addSpecies($p_species_name){
+        $uuid = $this->v4();
+
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO SPECIES(id,name) ".
+            "VALUES(".
+            "?,".
+            "?);");
+            $stmt->bindParam(1,$uuid);
+            $stmt->bindParam(2,$p_species_name);
+            
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        if($result > 0) {
+            return $uuid;
         }else{
-            return false;    
+            return null;    
         }
     }
 
-
+    /**
+     * Edit species name
+     * @param String $p_species_id The specific species ID
+     * @param String $p_species_name The new species name
+     * @return Boolean $result Returns true if updated successfully,else false
+     */
+    public function editSpeciesName($p_species_id,$p_species_name){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE SPECIES SET NAME=? ".
+            "WHERE ID = ?");
+        $stmt->bindParam(1,$p_species_name);
+        $stmt->bindParam(2,$p_species_id);
+        
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        if($result > 0){
+            return true;
+        }
+        return false;
+    }
 }
 ?>
 

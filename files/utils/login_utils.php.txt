@@ -78,14 +78,28 @@ function authorize($app, $username=null) {
 			return true;
 		}
 		else {
+			var_dump('asdfasdfasdf');
 			// User does not have permissions
-			$app->redirect('/403');
+			//$app->redirect('/403');
 		}
 	}
 	else {
 		// User is not logged in
 		return false;
 	}
+}
+
+function set_session_variables($username, $password, $role) {
+	// Correct credentials
+	$_SESSION['username'] = $username;
+	$_SESSION['role'] = $role;
+	$userBrowser = $_SERVER['HTTP_USER_AGENT'];
+	
+	// TODO: Password isn't salted, use this for now
+	//$_SESSION['loginString'] = hash('sha512', $hashPassword .
+	//		$userBrowser . $role);	
+	$_SESSION['loginString'] = hash('sha512', $password .
+			$userBrowser . $role);
 }
 ?>
 

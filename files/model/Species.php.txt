@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * Model class for an Admin
+ */
+class Species implements JsonSerializable {
+	
+	/**
+	* Species ID
+	*/
+	private $id;
+	/**
+	* Species Name
+	*/
+	private $name;
+
+
+	/**
+	*	Populate every field in Species object
+	* @param Array $p_info_array Array with all information on Species
+	*/
+	public function setInfo($p_info_array){
+		$this->setId($p_info_array['id']);
+		$this->setName($p_info_array['name']);
+
+	}
+
+	/**
+	* 	Getters
+	*/
+
+	public function getId(){
+		return $this->id;
+	}
+	public function getName(){
+		return $this->name;
+	}
+
+
+	/**
+	* 	Setters
+	*/
+
+	public function setId($p_id){
+		$this->id = $p_id;
+	}
+	public function setName($p_name){
+		$this->name = $p_name;
+	}
+
+
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'id'=>$this->id,
+			'name'=>$this->name,
+		);
+	}
+
+}
+?>
+

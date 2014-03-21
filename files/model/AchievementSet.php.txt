@@ -8,7 +8,7 @@ class AchievementSet implements JsonSerializable{
      /**
      * Achievement Set Name (string)  
      */
-    private $achievementSetName;.
+    private $achievementSetName;
     /**
      * Achievement Set Id (UUID)  
      */

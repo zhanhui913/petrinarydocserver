@@ -23,7 +23,6 @@ class InterestRecordController implements RouteController {
   public function create(&$args) {
 
     // TODO: authorize action
-
     $id = $args['interest']['id'];
     $ret = $this->mc->addInterestRecord($args['pet'], $id);
     echo json_encode(array(
@@ -41,12 +40,13 @@ class InterestRecordController implements RouteController {
 
   }
   public function destroy(&$args) {
+
     $id = $args['id'];
-
+    $petId = $args['petId'];
     // TODO: authorize action
-    $ret = $this->mc->deleteInterestRecord($id);
-    echo json_encode(array('id' => $ret));
 
+    $ret = $this->mc->deleteInterestRecord($petId, $id);
+    echo json_encode(array('wasSuccessful' => $ret));
   }
 
 }

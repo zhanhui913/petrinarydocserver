@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * Model class for an Admin
+ */
+class SpeciesAchievementSet implements JsonSerializable {
+	
+	/**
+	* Species ID
+	*/
+	private $species;
+	/**
+	* AchievementSet ID
+	*/
+	private $achievementSet;
+
+
+	/**
+	*	Populate every field in SpeciesAchievementSet object
+	* @param Array $p_info_array Array with all information on Species AchievementSet
+	*/
+	public function setInfo($p_info_array){
+		$this->setSpecies($p_info_array['species']);
+		$this->setAchievementSet($p_info_array['achievement_set']);
+
+	}
+
+	/**
+	* 	Getters
+	*/
+
+	public function getSpecies(){
+		return $this->species;
+	}
+	public function getAchievementSet(){
+		return $this->achievementSet;
+	}
+
+
+	/**
+	* 	Setters
+	*/
+
+	public function setSpecies($p_species){
+		$this->species = $p_species;
+	}
+	public function setAchievementSet($p_achievementSet){
+		$this->achievementSet = $p_achievementSet;
+	}
+
+
+
+	/**
+	 * Data to be serialized into JSON
+	 * @return Array
+	 */
+	public function jsonSerialize() {
+		return array(
+			'species'=>$this->species,
+			'achievement_set'=>$this->achievementSet,
+		);
+	}
+
+}
+?>
+

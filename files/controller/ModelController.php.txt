@@ -14,6 +14,8 @@ require_once $root . '/../sys/model/AchievementSet.php';
 require_once $root . '/../sys/model/Achievement.php';
 require_once $root . '/../sys/model/AchievementRecord.php';
 require_once $root . '/../sys/model/Category.php';
+require_once $root . '/../sys/model/Species.php';
+require_once $root . '/../sys/model/SpeciesAchievementSet.php';
 
 /**
 * The interface that provides methods to the front end to call
@@ -83,6 +85,16 @@ class ModelController {
      */
     public function updateOwnerUsername($p_email,$p_username){
         return $this->helper->updateOwnerUsername($p_email,$p_username);
+    }
+    
+    /** 
+     * Update the given owner's pic_path.
+     * @param String $p_email The id of the owner who's pic_path is to be updated.
+     * @param String $p_pic_path The pic_path value to replace the old.
+     * @return boolean $result Return true on success, false otherwise.
+     */
+    public function updateOwnerAvatar($p_email, $p_pic_path) {
+        return $this->helper->updateOwnerAvatar($p_email, $p_pic_path);
     }
     
     /**
@@ -186,10 +198,14 @@ class ModelController {
          
  			//Getting the array of picture objects for this pet
             $pictureArray = $this->getPictures($p_pet_id);
+            
             //Creating the empty array for putting picture objects
+            $achievements = $this->getLatestAchievementRecordsForPet($p_pet_id);
+
+	    $clinic = $this->getHomeClinic($p_pet_id);
 
             $pet = new Pet(); 
-		    $pet->setInfo($result[0],$pictureArray,$interestArray);
+		    $pet->setInfo($result[0],$pictureArray,$interestArray, $clinic, $achievements);
             return $pet;
         }
     }
@@ -223,10 +239,12 @@ class ModelController {
      * @param String $p_species Provided species
      * @param Boolean $p_isNeutered Provided isNeutered
      * @param Integer $p_netPoints Provided netPoints
+     * @param String $p_homeClinic The id of the clinic this pet has as its home clinic.
+     * @param Integer $p_active The active status for this pet
      * @return String|Boolean Return Pet's ID if successful, null otherwise
      **/
     public function addPet($p_name,$p_ownerId,$p_birthday,$p_sex,$p_age,
-        $p_colour,$p_breed,$p_species,$p_isNeutered,$p_netPoints){
+        $p_colour,$p_breed,$p_species,$p_isNeutered,$p_netPoints,$p_homeClinic,$p_active){
         $time = time();
 
         //Pet Id will be the only ID that uses php uniqId (13 characters)
@@ -249,7 +267,9 @@ class ModelController {
             'breed'         =>  $p_breed,
             'species'       =>  $p_species,
             'isNeutered'    =>  $p_isNeutered,
-            'net_points'    =>  $p_netPoints );
+            'net_points'    =>  $p_netPoints,
+            'clinic_id'     =>  $p_homeClinic,
+            'active'        =>  $p_active );
 
         $result = $this->helper->addPet($petArray);
         return $result;
@@ -266,9 +286,11 @@ class ModelController {
      * @param String $p_breed Provided breed
      * @param String $p_species Provided species
      * @param Boolean $p_isNeutered Provided isNeutered
+     * @param Integer $p_clinic_id The home clinic for this pet
+     * @param Integer $p_active The active status for this pet
      * @return Boolean Returns true if successful, false otherwise
      **/
-    public function updatePet($p_petId,$p_name,$p_birthday,$p_sex,$p_age,$p_colour,$p_breed,$p_species,$p_isNeutered){
+    public function updatePet($p_petId,$p_name,$p_birthday,$p_sex,$p_age,$p_colour,$p_breed,$p_species,$p_isNeutered, $p_clinic_id,$p_active){
         $pet = array( 
             'name'          =>  $p_name,
             'birthday'      =>  $p_birthday,
@@ -277,7 +299,9 @@ class ModelController {
             'colour'        =>  $p_colour,
             'breed'         =>  $p_breed,
             'species'       =>  $p_species,
-            'isNeutered'    =>  $p_isNeutered);
+            'isNeutered'    =>  $p_isNeutered,
+            'clinic_id'     =>  $p_clinic_id,
+            'active'        =>  $p_active);
         $result = $this->helper->updatePet($p_petId,$pet);
         return $result;
 
@@ -293,7 +317,36 @@ class ModelController {
         return $this->helper->deletePet($p_email,$p_petId);
     }
 
+    /**
+     * Get an array of pet lists
+     * @param String $p_active Provided active (1 or 0)
+     * @return Array Returns an array of pet objects
+     */
+    public function getAllPets($p_active){
+        //Get only active pets
+        if($p_active == 1){
+            $result = $this->helper->getAllActivePets();
+        }
+        //Get all pets (Active and Inactive)
+        else {
+            $result = $this->helper->getAllPets();
+        }
+
+        $array = array();
+        if($result !=null){
+            for($i=0;$i<sizeof($result);$i++){
+                $pets = $this->getPet($result[$i][1]);
+                array_push($array, $pets);
+            }
+            return $array;
+        }else{
+            return null;
+        }
+    }
+
+
 	/**
+     * @deprecated
 	 * Translates key values in associative array providing values for
 	 * pet model from "client side" camelCase style to the keys
 	 * used by the db.
@@ -311,7 +364,9 @@ class ModelController {
 			'breed' 	    =>	$petDef['petBreed'],
 			'species' 	    =>	$petDef['petSpecies'],
             'isNeutered'    =>	$petDef['petNs'],
-            'netPoints'     =>  $petDef['petNetPoints']
+            'netPoints'     =>  $petDef['petNetPoints'],
+            'clinic_id'     =>  $petDef['petClinic'],
+            'active'     =>  $petDef['petActive']
 		);
 	}
 
@@ -339,7 +394,7 @@ class ModelController {
 					  ->getCategoryId());
 				}
 			    $interestRecord->setInfo($result[$i],$interest,$category);
-			    array_push($array,$interest);
+			    array_push($array,$interestRecord);
             }
             return $array;
         }else{
@@ -398,7 +453,7 @@ class ModelController {
 	public function getInterest($p_interest_id){
         $result = $this->helper->getInterest($p_interest_id);
         if($result!= null){
-            $interest = new interest();
+            $interest = new Interest();
             $interest->setInfo($result);
             return $interest;
         }else{
@@ -617,6 +672,17 @@ class ModelController {
 	}
 
 	/**
+	 * Gets all clinic object info
+	 * @return Object A clinic object
+	 */
+	public function getHomeClinic($p_pet_id){
+		$result = $this->helper->getHomeClinic($p_pet_id);
+		$clinic = new Clinic();
+		$clinic->setInfo($result);
+		return $clinic;
+	}
+
+	/**
      * Get the password and salt for a specific clinic by email
      * @param String $p_email Provided clinic email
      * @return Array An array of password,salt, and active if the email 
@@ -632,11 +698,46 @@ class ModelController {
      * @return String|Boolean The Clinic's ID if successful, null otherwise
      */
     public function createClinic($p_clinic_array){
+        //$p_clinic_array = $this->clinicToDbArray($p_clinic_array);
+
+    	$p_clinic_array['postal_code'] = $p_clinic_array['postalCode'];
+        $p_clinic_array['phone'] = $p_clinic_array['phoneNumber'];
+        $p_clinic_array['contact_person'] = $p_clinic_array['contactPerson'];
         return $this->helper->createClinic($p_clinic_array);
+    }
+
+    /** 
+	 * Update a clinics info
+	 * @param  Array $p_clinic_array Clinics Info Array (DOES NOT INCLUDE ACTIVE,PASS, OR SALT)
+	 * @return Boolean True if updated successful, false otherwise
+	 */
+	public function updateClinic($p_clinic_array){
+
+        $p_clinic_array = $this->clinicToDbArray($p_clinic_array);
+
+        // If pw field set in p_clinic_array then we update password in db.
+        $pwRet = false;
+        if (isset($p_clinic_array['password'])      && 
+            ($p_clinic_array['password'] != "")     &&
+            ($p_clinic_array['password'] != null)) {
+            $pwRet = $this->helper->updateClinicPassword($p_clinic_array);
+        }
+		return array(
+            'passwordUpdated' => $pwRet,
+            'clinicUpdated'   => $this->helper->updateClinicInfo($p_clinic_array)
+        );
+	}
+
+    /**
+     * Given clinic ID, change the clinic active to invactive
+     * @param ID $p_clinic_id Provide a clinic ID
+     * @return Boolean Return True or False if the clinic is set to inactive
+     */
+    public function deleteClinic($p_clinic_id){
+        return $this->helper->deleteClinic($p_clinic_id);
     }
     
      /**
-     * @deprecated
      * Get an clinic object when supplied a clinic id
      * @param String $p_clinic_id Provided clinic id
      * @return Object|Boolean Returns a clinic object if found, otherwise returns null
@@ -644,12 +745,41 @@ class ModelController {
     public function getClinicObject($p_clinic_id){
         $result = $this->helper->getClinicById($p_clinic_id);
         $clinic = new Clinic();
+	$clinic->setInfo($result);
         if($result != null){
             return $clinic;
         }else{
             return null;
         }
     }
+
+    /**
+	 * Translates key values in associative array providing values for
+	 * clinid model from "client side" camelCase style to the keys
+	 * used by the db.
+	 * @param Array $clinicDef Associate array providing values for clinic model with key values in the format expected/provided by the client side
+	 * @return Array An associate array as described above.
+	 */
+	function clinicToDbArray($clinicDef) {
+		return array(
+			'name' 	    	=> 	$clinicDef['name'],
+			'address' 	    =>	$clinicDef['address'],
+			'city'      	=>	$clinicDef['city'],
+			'province' 		=>	$clinicDef['province'],
+			'postal_code'   =>	$clinicDef['postalCode'],
+			'latitude'	    => 	$clinicDef['latitude'],
+			'longitude' 	=>	$clinicDef['longitude'],
+			'email' 	    =>	$clinicDef['email'],
+            'website'   	=>	$clinicDef['website'],
+            'contact_person'=>  $clinicDef['contactPerson'],
+            'phone'     	=>  $clinicDef['phoneNumber'],
+            //'expiration'    =>  $clinicDef['expiration'],
+            'clinic_id'     =>  $clinicDef['id'],
+            'password'      =>  $clinicDef['password'],
+            'salt'          =>  $clinicDef['salt'],
+            'active'        =>  $clinicDef['isActive']
+		);
+	}
 
     /**************************************************************************
     *
@@ -745,41 +875,379 @@ class ModelController {
         return $array;
     }
 
+
+    /**
+     * Adds an achievementSet into the db
+     * @param  String] $p_achievementSet_name Provided achievementSet name
+     * @param  String $p_achievementSet_description Provided achievementSet description
+     * @return String|Boolean Returns AchievementSet ID if inserted successfully, null otherwise
+     */
+    public function addAchievementSet($p_achievementSet_name,$p_achievementSet_description){
+        $result = $this->helper->addAchievementSet($p_achievementSet_name,$p_achievementSet_description);
+        return $result;
+    }
+
+    /**
+     * Deletes an achievementSet from the database
+     * @param  String $p_achievementSet_id Provided achievementSet ID
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function deleteAchievementSet($p_achievementSet_id){
+        $result = $this->helper->deleteAchievementSet($p_achievementSet_id);
+        return $result;
+    }
+
+    /**
+     * Edits an achievementSet description from the database
+     * @param  String $p_achievementSet_id Provided achievementSet ID
+     * @param  String $p_achievementSet_description Provided new achievementSet Description
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementSetDescription($p_achievementSet_id,$p_achievementSet_description){
+        $result = $this->helper->editAchievementSetDescription($p_achievementSet_id,$p_achievementSet_description);
+        return $result;
+    }
+
+    /**
+     * Edits an achievementSet name from the database
+     * @param  String $p_achievementSet_id Provided achievementSet ID
+     * @param  String $p_achievementSet_name Provided new achievementSet name
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementSetName($p_achievementSet_id,$p_achievementSet_name){
+        $result = $this->helper->editAchievementSetName($p_achievementSet_id,$p_achievementSet_name);
+        return $result;
+    }
+
     /**************************************************************************
     *
     *    Achievement Methods
     *
     /**************************************************************************/
 
-	/**
-	 * Get achievement record information
-	 * @param  String $p_achievement_id  Provided Achievement's ID
-	 * @param  String $p_pet_id 		 Provided Pet's ID
-	 * @return Object|Boolean            Achievement Record Object if successful, else returns null
-	 */
-	public function getAchievementRecordObject($p_achievement_id, $p_pet_id){
-		$result =  $this->helper->getAchievementRecordInfo($p_achievement_id, $p_pet_id);
-		if(count($result)>=1){
-			$achievementRecord = new AchievementRecord();
-			$achievementRecord->setInfo($result[0]);
-			return $achievementRecord;
-		}else{
-			return null;
-		}
-	}
+    public function getFirstAchievementForSet($p_pet_id){
 
-	/**
-	 * Add achievement record information
-	 * @param  String $p_achievement_id  Provided Achievement ID
-	 * @param  String $p_pet_id 		Provided Pet ID
-	 * @param  String $p_vet_id       Provided Vet ID
-	 * @param  Integer $p_points 		    Provided Points
-	 * @return Boolean  True if added successfully, else false          
-	 */
-	public function addAchievements($p_achievement_id,$p_pet_id,$p_vet_id,$p_points){
-		$result = $this->helper->addAchievementRecord($p_achievement_id,$p_pet_id,$p_vet_id,$p_points);
-		return $result;
-	}
+        $result = $this->helper->getFirstAchievementForSet($p_pet_id);
+        if($result != null){
+            $achievement = new Achievement();
+            $achievement->setInfo($result);
+            return $achievement;
+        }else{
+            return null;
+        }
+        
+    }
+
+    /**
+    * Get a particular achievement
+    * @param String $p_achievement_id The ID of the achievement
+    * @return Object Returns an achievement object
+    */
+    public function getAchievement($p_achievement_id){
+        $result = $this->helper->getAchievement($p_achievement_id);
+        if($result!= null){
+            $achievement = new Achievement();
+            $achievement->setInfo($result);
+            return $achievement;
+        }else{
+            return null;
+        }
+    }
+
+    /**
+    * Get all achievement for a particular AchievementSet
+    * @return Array Returns an array of achievement objects
+    */
+    public function getAllAchievements(){
+        
+        $result = $this->helper->getAllAchievements();
+        $array = array();
+        for($i=0;$i<sizeof($result);$i++){
+            $achievement = new Achievement();
+            $achievement->setInfo($result[$i]);
+            array_push($array, $achievement);
+        }
+
+        return $array;
+    }
+
+    /**
+    * Get all achievement for a particular AchievementSet
+    * @param String $p_achievementSet_id The ID of the achievementSet
+    * @return Array Returns an array of achievement objects
+    */
+    public function getAllAchievementForSet($p_achievementSet_id){
+        
+        $result = $this->helper->getAllAchievementForSet($p_achievementSet_id);
+        $array = array();
+        for($i=0;$i<sizeof($result);$i++){
+            $achievement = new Achievement();
+            $achievement->setInfo($result[$i]);
+            array_push($array, $achievement);
+        }
+
+        return $array;
+    }
+
+    /**
+     * Adds an achievement into the db
+     * @param Integer $p_achievement_points The achievement points
+     * @param String $p_achievement_name The achievement name
+     * @param String $p_achievement_description The achievement description
+     * @param String $p_achievement_next The next achievement in this set
+     * @param Integer $p_achievement_total The total number of achievement in this set
+     * @param Integer $p_achievement_position The current position in this set
+     * @param String $p_achievement_setId The achievement's achievementSet's ID
+     * @return String|Boolean Returns AchievementSet ID if inserted successfully, null otherwise
+     */
+    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId){
+
+        $result = $this->helper->addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId);
+        return $result;
+    }
+
+    /**
+     * Deletes an achievement from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function deleteAchievement($p_achievement_id){
+        $result = $this->helper->deleteAchievement($p_achievement_id);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement Points from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_points Provided new achievement points
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementPoints($p_achievement_id,$p_achievement_points){
+        $result = $this->helper->editAchievementPoints($p_achievement_id,$p_achievement_points);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement name from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_name Provided new achievement name
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementName($p_achievement_id,$p_achievement_name){
+        $result = $this->helper->editAchievementName($p_achievement_id,$p_achievement_name);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement description from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_description Provided new achievement description
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementDescription($p_achievement_id,$p_achievement_description){
+        $result = $this->helper->editAchievementDescription($p_achievement_id,$p_achievement_description);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement next from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_next Provided new achievement next
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementNext($p_achievement_id,$p_achievement_next){
+        $result = $this->helper->editAchievementNext($p_achievement_id,$p_achievement_next);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement total from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_total Provided new achievement total
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementTotal($p_achievement_id,$p_achievement_total){
+        $result = $this->helper->editAchievementTotal($p_achievement_id,$p_achievement_total);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement position from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_position Provided new achievement Position
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementPosition($p_achievement_id,$p_achievement_position){
+        $result = $this->helper->editAchievementPosition($p_achievement_id,$p_achievement_position);
+        return $result;
+    }
+
+    /**
+     * Edits an achievement set ID from the database
+     * @param  String $p_achievement_id Provided achievement ID
+     * @param  String $p_achievement_setId Provided new achievement setID
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function editAchievementSetId($p_achievement_id,$p_achievement_setId){
+        $result = $this->helper->editAchievementSetId($p_achievement_id,$p_achievement_setId);
+        return $result;
+    }
+
+
+    /**************************************************************************
+    *
+    *    Achievement Record Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get latest achievement record for a pet
+     * @param  String $p_pet_id Provided Pet's ID
+     * @return Array Array of Achievement Record Objects if successful, else returns null
+     */
+    public function getLatestAchievementRecordsForPet($p_pet_id){
+
+        $resultArray = array();
+
+        $array = $this->helper->getLatestAchievementRecordForPet($p_pet_id);
+        if ($array != null){
+            for( $i=0 ; $i<sizeof($array) ; $i++){
+                $currentAchievement = new Achievement();
+                $achievementRecord = new AchievementRecord();
+                if($array[$i]['id'] == null){
+                    $nextAchievement = $this->getFirstAchievementForSet($array[$i]['set_id']);
+                }else{
+                    $currentAchievement->setInfo($array[$i]);
+                    $nextAchievement = $this->getAchievement($array[$i]['next']);
+                }
+
+                $achievementRecord->setInfo($array[$i],$currentAchievement,$nextAchievement);
+                array_push($resultArray,$achievementRecord);
+            } 
+        }else{
+            return null;
+        }
+        return $resultArray;
+    } 
+
+    /**
+     * Get an achievement record by pet ID and achievement ID
+     * @param String $p_pet_id Pet ID.
+     * @param String $p_achievement_id Achievement ID.
+     * @return Array Returns array of achievement record attributes if successful,else null.
+     */
+    public function getAchievementRecord($p_pet_id,$p_achievement_id){
+
+        $result = $this->helper->getAchievementRecord($p_pet_id,$p_achievement_id);
+        if($result != null ){
+            $achievementRecord = new AchievementRecord();
+            $currentAchievement = new Achievement();
+            $currentAchievement->setInfo($result);
+            $nextAchievement = $this->getAchievement($result['next']);
+
+            $achievementRecord->setInfo($result,$currentAchievement,$nextAchievement);
+            return $achievementRecord;
+        }
+         
+        return null;
+    }
+
+    /**
+     * Add a new achievement record for a pet
+     * @param String $p_pet_id Pet ID
+     * @param String $p_achievement_id Achievement ID
+     * @param String $p_clinic_id Clinic ID
+     * @return boolean $result Returns true if successful, false otherwise 
+     */
+    public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){
+        $result = $this->helper->addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id);
+
+        if($result == true){
+
+            $status = $this->helper->updatePetPoints($p_achievement_id,$p_pet_id);
+            if($status == false){
+                return null;
+            }
+
+            return $this->getAchievementRecord($p_pet_id,$p_achievement_id);
+
+        }
+        return null;
+    }
+
+    /**
+     * Delete an achievement record based on pet ID and set ID
+     * @param String $p_pet_id Pet ID
+     * @param String $p_set_id Set ID
+     * @return Boolean Returns true if it is deleted successfully,else false
+     */
+    public function deleteAchievementRecord($p_pet_id,$p_achievement_id){
+
+        return $this->helper->deleteAchievementRecord($p_pet_id,$p_achievement_id);
+    }
+
+
+    /**************************************************************************
+    *
+    *    Species Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Get all species
+     * @return Array Returns array of species objects
+     */
+    public function getAllSpecies(){
+        $result = $this->helper->getAllSpecies();
+
+        $array = array();
+        for($i=0;$i<sizeof($result);$i++){
+            $species = new Species();
+            $species->setInfo($result[$i]);
+            array_push($array, $species);
+        }
+
+        return $array;
+    }
+
+    /**
+     * Get a specific species
+     * @param String $p_species_id The specific species ID
+     * @return Object Returns species object
+     */
+    public function getSpecies($p_species_id){
+        $result = $this->helper->getSpecies($p_species_id);
+        if($result!= null){
+            $species = new Species();
+            $species->setInfo($result);
+            return $species;
+        }else{
+            return null;
+        }
+    }
+
+   /**
+     * Adding a new species
+     * @param String $p_species_name The new species name
+     * @return Boolean|String $result Returns ID if added successfully,else null
+     */
+    public function addSpecies($p_species_name){
+        $result = $this->helper->addSpecies($p_species_name);
+        return $result;
+    }
+
+    /**
+     * Edit species name
+     * @param String $p_species_id The specific species ID
+     * @param String $p_species_name The new species name
+     * @return Boolean $result Returns true if updated successfully,else false
+     */
+    public function editSpeciesName($p_species_id,$p_species_name){
+        $result = $this->helper->editSpeciesName($p_species_id,$p_species_name);
+        return $result;
+    }
 
 }	
 ?>

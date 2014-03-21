@@ -5,112 +5,99 @@
  */
 class AchievementRecord implements JsonSerializable{
 
-     /**
-     * Achievement ID, references Achievement table (UUID)
-     */
-    private $achievementId;
-     /**
-     * Achievement Name, taken from Achievement table (introduces redundancy) (string)
-     */    
-    private $achievementName;
-     /**
-     * Achievement Description, taken from Achievement table (introduces redundancy) (string)
-     */  
-    private $achievementDescription;
-     /**
-     * Achievement Points (int), specific to the pet (multiplier can be applied)
-     */  
-    private $points;
-     /**
-     * Date that the Achievement was added (datetime)
-     */  
-    private $date;
-     /**
+    /**
      * Pet Id for which the Achievement is for, references Pet table/model (unique id)
      */
     private $petId;
-     /**
-     * @deprecated
-     * Vet Id that gave the Achievement (NULLABLE) (UUID) 
+    
+    /**
+     * The date of last update 
      */
-    private $vetId;
-     /**
-     * @deprecated
-     * Vet Name that corresponds to the Vet Id from the Vets table
+    private $date;
+
+    /**
+     * Clinic Id
      */
-    private $vetName;
+    private $clinicId;
+
+    /**
+     * Points
+     */
+    private $points;
+
+    /**
+     * The achievement that the pet currently achieved
+     */
+    private $currentAchievement;
+
+    /**
+     * The upcoming achievement
+     */
+    private $nextAchievement;
 
     /**
      * Populate every field in achievement Record object
      * @param Array $p_info_array Array with all information on AchievementRecord
      */
-    public function setInfo($p_info_array) {
-        $this->setAchievementId($p_info_array['achievement_id']);
+    public function setInfo($p_info_array,$p_current_achievement,$p_next_achievement) {
+
 		$this->setPetId($p_info_array['pet_id']);
-		$this->setPoints($p_info_array['points']);
-		$this->setDate($p_info_array['dates']);
-        $this->setAchievementName($p_info_array['achievement_name']);
-        $this->setAchievementDescription($p_info_array['description']);
-        $this->setVetId($p_info_array['vet_id']);
-        //$this->setVetName($p_info_array['vet_name']); dont need this for now
+        $this->setDate($p_info_array['dates']);
+        $this->setPoints($p_info_array['points']);
+        $this->setClinicId($p_info_array['clinic_id']);
+
+        $this->currentAchievement = $p_current_achievement;
+        $this->nextAchievement = $p_next_achievement;
+
     }
 
     /**
      * Getters
      */
-
-    public function getAchievementId() {
-        return $this->achievementId;
-    }
-    public function getAchievementName(){
-        return $this->achievementName;
-    }
-    public function getAchievementDescription(){
-        return $this->achievementDescription;
-    }
-    public function getPoints() {
-        return $this->points;
-    }
-    public function getDate() {
-        return $this->date;
-    }
-    public function getPetId() {
+    public function getPetId(){
         return $this->petId;
     }
-    public function getVetId(){
-        return $this->vetId;
+
+    public function getDate(){
+        return $this->date;
     }
-    public function getVetName(){
-        return $this->vetName;
+
+    public function getClinicId(){
+        return $this->clinicId;
+    }
+
+    public function getPoints(){
+        return $this->points;
+    }
+
+    public function getCurrentAchievement(){
+        return $this->currentAchievement;
+    }
+
+    public function getNextAchievement(){
+        return $this->nextAchievement;
     }
 
     /**
      * Setters
      */
-
-    public function setAchievementId($p_achievement_id) {
-        $this->achievementId = $p_achievement_id;
-    }
-    public function setAchievementName($p_achievement_name){
-        $this->achievementName = $p_achievement_name;
-    }
-    public function setAchievementDescription($p_achievement_description){
-        $this->achievementDescription = $p_achievement_description;
-    }
-    public function setPoints($p_points) {
-        $this->points =  $p_points;
-    }
-    public function setDate($p_date) {
-        $this->date = $p_date;
-    }
     public function setPetId($p_pet_id) {
         $this->petId = $p_pet_id;
     }
-    public function setVetID($p_vet_id){
-        $this->vetId = $p_vet_id;
+    public function setDate($p_date){
+        $this->date = $p_date;
     }
-    public function setVetName($p_vet_name){
-        $this->vetName = $p_vet_name;
+    public function setPoints($p_points){
+        $this->date = $p_points;
+    }
+    public function setClinicId($p_clinic_id){
+        $this->clinicId = $p_clinic_id;
+    }
+    public function setCurrentAchievement($p_current_achievement){
+        $this->currentAchievement = $p_current_achievement;
+    }
+    public function setNextAchievement($p_next_achievement){
+        $this->nextAchievement = $p_next_achievement;
     }
 
     /**
@@ -119,10 +106,12 @@ class AchievementRecord implements JsonSerializable{
      */
     public function jsonSerialize() {
         return array(
-            'AchievementId' 	=> $this->achievementId,
-			'PetId' 			=> $this->petId,
-			'points'			=> $this->points,
-			'date'				=> $this->date
+			'petId'                 => $this->petId,
+			'date'                  => $this->date,
+            'clinicId'              => $this->clinicId,
+            'points'                => $this->points,
+			'currentAchievement'    => $this->currentAchievement,
+            'nextAchievement'       => $this->nextAchievement
         );
     }
 }

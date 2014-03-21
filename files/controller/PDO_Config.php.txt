@@ -18,13 +18,11 @@ defined('DB_USER') ? NULL : define('DB_USER', 'root');
 /**
 * The Password
 */
-defined('DB_PASS') ? NULL : define('DB_PASS', '');
-
+defined('DB_PASS') ? NULL : define('DB_PASS', 'oi2eooi278');
 /**
 * The Database Name
 */
 defined('DB_NAME') ? NULL : define('DB_NAME', 'petrinary');
-
 
 ?>
 

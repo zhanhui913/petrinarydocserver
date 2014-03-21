@@ -3,6 +3,7 @@
 $root = $_SERVER['DOCUMENT_ROOT'];
 require_once $root . '/../sys/controller/RouteController.php';
 require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
 require_once $root . '/../libs/Slim/Slim.php';
 
 /**
@@ -27,10 +28,22 @@ class OwnerController implements RouteController {
 	 * Handle owner signup/creation.
 	 */
 	public function create(&$args) {
-		$email = $args['email'];
-		$username = $args['username'];
-		$password = $args['password'];
+		
+		// Creating an account from a clinic uses different form names
+		if (isset($args['email'], $args['username'], $args['password'])) {
+			
+			$email = $args['email'];
+			$username = $args['username'];
+			$password = $args['password'];
 
+		}
+		else {
+			
+			$email = $args['newEmail'];
+			$username = $args['newUsername'];
+			$password = 'password';
+		}
+		
 		// Generate salt.  TODO: introduce measure of randomness to salt creation.
 		$salt = time() . $username;
 
@@ -48,7 +61,8 @@ class OwnerController implements RouteController {
 		);
 
 		echo json_encode(array(
-			'successfullyCreated' => $successfullyCreated
+			'successfullyCreated' => $successfullyCreated,
+			'email' => $email
 		));
 	}
 
@@ -69,7 +83,40 @@ class OwnerController implements RouteController {
 
 	}
 
-	public function update(&$args) {}
+	public function update(&$args) {
+		if (!isset($args['id'])) {
+			$this->app->halt(400);
+		}
+
+		if (isset($args['passwordReset']) && $args['passwordReset'] == true) {
+			// Ensure password passed matches the one in the database.
+			$credentials = $this->mc->checkOwnerAccount($args['id']);
+			$pw = $credentials['pass'];
+			$salt = $credentials['salt'];
+
+			$clientHash = hash('sha512', $salt . $args['oldPassword']);
+
+			if ($pw == $clientHash) {
+
+				$newPw = hash('sha512', $salt . $args['newPassword']);
+				$ret = $this->mc->
+					updateOwnerPassword($args['id'], $newPw, $salt);
+
+				set_session_variables($args['id'], $newPw, 'owner');
+
+				echo json_encode(array('wasSuccessful' => $ret));
+
+			} else {
+				echo json_encode(
+					array(
+						'error' => 'Bad credentials.',
+						'wasSuccessful' => false
+					)
+				);
+				return;
+			}
+		}
+	}
 	public function destroy(&$args) {}
 
 }

@@ -53,7 +53,7 @@ $root = $_SERVER['DOCUMENT_ROOT'];
             }
             catch(\PDOException $e){
                 //die('Failed to executeUpdate' . $e->getMessage());
-                //throw new PDOException($e->getCode());
+                throw new PDOException($e->getCode());
                 return 0;
             }
         }

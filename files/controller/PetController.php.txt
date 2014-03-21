@@ -42,27 +42,36 @@ class PetController implements RouteController {
 		if (!isset($pet['name']) 			|| 
 				!isset($pet['owner']) 		|| 
 				!isset($pet['sex'])				||
-				!isset($pet['age']) 			||
+				!isset($pet['dob']) 			||
 				!isset($pet['breed'])			||
 				!isset($pet['species'])		) {
-			$this->app->halt(400);
+			echo json_encode(var_dump($pet));
+			//$this->app->halt(400);
 		} 
+
+		// Calculate age based on dob.
+		$dob = new DateTime($pet['dob']);
+		$present = new DateTime('today');
+		$age = $dob->diff($present)->y;
+		$pet['age'] = $age;
 
 		$ret = $this->mc->addPet(
 			$pet['name'],
 			$pet['owner'],
-			null,									// birthday
+			$pet['dob'],						// birthday
 			$pet['sex'],
 			$pet['age'],
-			null,									// colour
+			null,										// colour
 			$pet['breed'],
 			$pet['species'],
-			0,										// is neutered
-			0											// net points 
+			0,											// is neutered
+			0,											// net points
+			$pet['homeClinic'],
+			1												// isActive
 		);
 
 		echo json_encode(array(
-			'wasSuccessful' => ($ret != null)
+			'id' => $ret
 		));
 
 	} 
@@ -92,11 +101,33 @@ class PetController implements RouteController {
 	}
 
 	public function update(&$args) {
-		// TODO: implement when name/family clinic can be changed.
+		// TODO: ensure all expected parametesr are set
+		// TODO: authorize action
+
+		$ret = $this->mc->updatePet(
+			$args['id'],
+			$args['name'],
+			$args['dob'],
+			$args['sex'],
+			$args['age'],
+			$args['colour'],
+			$args['breed'],
+			$args['species'],
+			$args['isNeutered'],
+			$args['homeClinic'],
+			$args['isActive']
+		);
+
+		echo json_encode(array(
+				'wasSuccessful' => $ret
+			)
+		);
+
 	}
 
 	public function destroy(&$args) {
-		// TODO: does this have a use case?
+		echo json_encode(array('wasSuccessful' =>
+			$this->mc->deletePet($args['ownerId'], $args['petId'])));
 	}
 
 }

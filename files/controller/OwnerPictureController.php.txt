@@ -1,0 +1,64 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+require_once $root . '/../sys/utils/image_utils.php';
+
+/**
+ * Controller implementing functionality needed to upload a new profile picture
+ * for an owner.
+ */
+class OwnerPictureController implements RouteController {
+
+  /** Instance of Slim app. */
+  private $ap;
+
+  /** Instance of model controller. */
+  private $mc;
+
+  public function __construct() {
+    $this->app = Slim\Slim::getInstance();
+    $this->mc = new ModelController();
+  }
+
+  public function index(&$args) {}
+
+  public function create(&$args) {
+    $img = $args['imgFile'];
+
+    $picturesHome = '/img/owners/';
+    $hash = md5($img["tmp_name"] . time());
+    $root = $_SERVER['DOCUMENT_ROOT'];
+
+
+    umask(0);
+    if (is_dir($root . $picturesHome . $hash) == false) {
+      mkdir($root . $picturesHome . $hash, 0777);
+      chmod($root . $picturesHome . $hash, 0777);
+    }
+
+    $timestamp = time();
+    $src = $picturesHome . $hash . '/' . $timestamp . '_' .
+      $img['name'];
+
+    move_uploaded_file($img["tmp_name"], $root . $src);
+
+    fit_into_circle($src);
+
+    $ret = $this->mc->updateOwnerAvatar($args['id'], $src);
+
+    echo json_encode(array('wasSuccessful' => $ret, 'avatar' => $src));
+    
+  }
+
+  public function show(&$args) {}
+
+  public function update(&$args) {}
+
+  public function destroy(&$args) {}
+
+}
+
+?>

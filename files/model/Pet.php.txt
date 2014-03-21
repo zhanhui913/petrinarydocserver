@@ -1,6 +1,7 @@
 <?php
 require_once 'InterestRecord.php';
 require_once 'Picture.php';
+require_once 'Clinic.php';
 
 /**
  * Model class for a Pet
@@ -52,6 +53,14 @@ class Pet implements JsonSerializable{
 	*/
 	private $netPoints;
 	/**
+	* Clinic object for home clinic
+	*/
+	private $clinic;
+	/**
+	* Active bit
+	*/
+	private $active;
+	/**
 	* Array of Interest objects containing all the pets interests
 	*/
 	private $interestList = array(); //Array of interest objects
@@ -60,27 +69,36 @@ class Pet implements JsonSerializable{
 	*/
 	private $pictureList = array();  //Array of picture objects
 
+  private $achievementRecords = array();
+
 	/**
 	*	Populate every field in Pet object
 	*	@param Array $p_info_array Array containing all pet info
 	*	@param Array[Picture Object] $p_picture_list Array of picture objects
 	*	@param Array[Interest Object] $p_interest_list Array of interest objects
 	*/
-	public function setInfo($p_info_array,$p_picture_list,$p_interest_list){
+	public function setInfo($p_info_array,$p_picture_list,$p_interest_list, $p_clinic, $p_achievement_list){
 		$this->setName($p_info_array['name']);
-    		$this->setPetId($p_info_array['pet_id']);
-    		$this->setOwnerId($p_info_array['owner_id']);
-    		$this->setBirthday($p_info_array['birthday']);
+    	$this->setPetId($p_info_array['pet_id']);
+    	$this->setOwnerId($p_info_array['owner_id']);
+    	$this->setBirthday($p_info_array['birthday']);
 		$this->setSex($p_info_array['sex']);
 		$this->setAge($p_info_array['age']);
 		$this->setColour($p_info_array['colour']);
 		$this->setBreed($p_info_array['breed']);
 		$this->setSpecies($p_info_array['species']);
 		$this->setIsNeutered($p_info_array['isNeutered']);
-    		$this->setNetPoints($p_info_array['net_points']);
-    		$this->setInterestList($p_interest_list);
-    		$this->setPictureList($p_picture_list);
+    	$this->setNetPoints($p_info_array['net_points']);
+    	$this->setInterestList($p_interest_list);
+    	$this->setPictureList($p_picture_list);
+		$this->setClinic($p_clinic);
+		$this->setActive($p_info_array['active']);
+    $this->setAchievementRecords($p_achievement_list);
 	}
+
+  public function setAchievementRecords($p_achievement_list) {
+    $this->achievementRecords = $p_achievement_list;
+  }
 
 	/**
 	 * Getters
@@ -125,6 +143,12 @@ class Pet implements JsonSerializable{
  	public function getPictureList(){
   		return $this->pictureList;
   	}
+  	public function getClinic(){
+  		return $this->clinic;
+  	}
+  	public function getActive(){
+  		return $this->active;
+  	}
 
 	/**
 	 * Setters
@@ -165,10 +189,16 @@ class Pet implements JsonSerializable{
  	}
 	public function setInterestList($p_interest_list){
 	 	$this->interestList = $p_interest_list;
-    	}
-    	public function setPictureList($p_picture_list){
-    		$this->pictureList = $p_picture_list;
-    	}
+    }
+    public function setPictureList($p_picture_list){
+    	$this->pictureList = $p_picture_list;
+    }
+    public function setClinic($p_clinic){
+    	$this->clinic = $p_clinic;
+    }
+    public function setActive($p_active){
+    	$this->active = $p_active;
+    }
 
 	/**
 	 * Data to be serialized into JSON
@@ -176,18 +206,21 @@ class Pet implements JsonSerializable{
 	 */
 	public function jsonSerialize() {
 		return array(
-			'id'        => $this->petId,
-      			'name'      => $this->petName,
-      			'dob'       => $this->birthday,
-			'sex'       => $this->sex,
-			'age'       => $this->age,
-			'colour'    => $this->colour,
-			'breed'     => $this->breed,
-			'species'   => $this->species,
-      			'ns'        => $this->isNeutered,
-      			'points'    => $this->netPoints,
-      			'interests' => $this->interestList,
-      			'pictures'  => $this->pictureList
+  			'id'        	=> $this->petId,
+    		'name'      	=> $this->petName,
+    		'dob'       	=> $this->birthday,
+  			'sex'       	=> $this->sex,
+  			'age'      		=> $this->age,
+  			'colour'    	=> $this->colour,
+  			'breed'     	=> $this->breed,
+  			'species'   	=> $this->species,
+    		'isNeutered'        	=> $this->isNeutered,
+    		'points'    	=> $this->netPoints,
+    		'interests' 	=> $this->interestList,
+    		'pictures'  	=> $this->pictureList,
+    		'homeClinic'	=> $this->clinic,
+    		'isActive'		=> $this->active,
+        'achievements' => $this->achievementRecords
 		);
 	}
 }

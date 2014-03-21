@@ -3,6 +3,7 @@
 $root = $_SERVER['DOCUMENT_ROOT'];
 require_once $root . '/../sys/controller/RouteController.php';
 require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
 require_once $root . '/../libs/Slim/Slim.php';
 
 /**
@@ -13,11 +14,18 @@ class LoginController implements RouteController {
 	private $mc;
 	private $app;
 
+	/**
+	 * Initialization
+	 */
 	public function __construct() {
 		$this->mc = new ModelController();
 		$this->app = Slim\Slim::getInstance();
 	}
 
+	/**
+	 * GET request to the server with no queries.
+	 * @param $args is null, just a placeholder.
+	 */
 	public function index(&$args) {
 
 		if (isset($args['referrer'])) {
@@ -30,6 +38,10 @@ class LoginController implements RouteController {
 
 	}
 
+	/**
+	 * POST request to the server
+	 * @param $args is a dictionary with the username and password.
+	 */
 	public function create(&$args) {
 		
 		$username = $args['username'];
@@ -66,19 +78,8 @@ class LoginController implements RouteController {
 
 			// TODO: clinic login isn't salted, would need this instead:
 			if ($hashPassword == $user['pass']) {
-			//if ($hashPassword == $user['pass']) {
-
-				// Correct credentials
-				$_SESSION['username'] = $username;
-				$_SESSION['role'] = $role;
-				$userBrowser = $_SERVER['HTTP_USER_AGENT'];
-				
-				// TODO: Password isn't salted, use this for now
-				$_SESSION['loginString'] = hash('sha512', $hashPassword .
-						$userBrowser . $role);	
-				//$_SESSION['loginString'] = hash('sha512', $password .
-				//		$userBrowser . $role);
-				
+			//if ($password == $user['pass']) {
+				set_session_variables($username, $hashPassword, $role);
 				$loginSuccessful = TRUE;	
 			}
 		}

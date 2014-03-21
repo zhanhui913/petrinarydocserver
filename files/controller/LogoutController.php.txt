@@ -11,10 +11,17 @@ class LogoutController implements RouteController {
 	
 	private $app;
 
+	/**
+	 * Initialization
+	 */
 	public function __construct() {
 		$this->app = Slim\Slim::getInstance();
 	}
 
+	/**
+	 * GET request to the server with no queries.
+	 * @param $args is null, just a placeholder.
+	 */
 	public function index(&$args) {
 		
 		// Clear $_SESSION[] array.
@@ -39,6 +46,10 @@ class LogoutController implements RouteController {
 		$this->app->redirect('/');
 	}
 
+	/**
+	 * POST request to the server
+	 * @param $args is null, just a placeholder.
+	 */
 	public function create(&$args) {
 		
 		// Clear $_SESSION[] array.

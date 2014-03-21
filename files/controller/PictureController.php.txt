@@ -20,7 +20,7 @@ class PictureController implements RouteController {
 		$this->mc = new ModelController();
 		$this->app = Slim\Slim::getInstance();
 		$this->ALLOWED_EXTENSIONS = array('gif', 'jpeg', 'jpg', 'png');
-		$this->MAX_FILE_SIZE = 1000000;
+		$this->MAX_FILE_SIZE = 10000000000000;
 	}
 
 	public function index(&$args) {

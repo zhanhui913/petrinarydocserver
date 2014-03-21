@@ -118,6 +118,38 @@
 
     return true;
   }
+  /**
+  *
+  *Crops the resized image and adds it to the img/Interests folder as a square thumbnail
+  */
+  function crop_resized_image($resizedFile, $width, $height) {
+	$info = getimagesize($resizedFile);
+	//Get image type
+    switch ( $info[2] ) {
+      case IMAGETYPE_JPEG:  $image = imagecreatefromjpeg($resizedFile);  break;
+      case IMAGETYPE_GIF:   $image = imagecreatefromgif($resizedFile);   break;
+      case IMAGETYPE_PNG:   $image = imagecreatefrompng($resizedFile);   break;
+      default: return false;
+    }
+	
+	 // $name = "img/vet-btn-blur.png";
+	 // $image = imagecreatefrompng($name);
+	 $cropped =  imagecreatetruecolor(120, 120);
+	// $dst_x = ($width - 120)/2;
+
+	$baseFilename = basename($resizedFile);
+	
+	if($width > $height){
+		$dst_x = ($width - 120)/2;
+		$b = imagecopyresampled ( $cropped , $image ,0 , 0 ,  $dst_x , 0 , 120, 120, 120, 120);
+		imagepng($cropped ,"img/Interests/".$baseFilename);
+	}
+	else {
+		$dst_y = ($height - 120)/2;
+		$b = imagecopyresampled ( $cropped , $image ,0 , 0 ,  0 , $dst_y , 120, 120, 120, 120);
+		imagepng($cropped ,"img/Interests/".$baseFilename);
+	}
+  }
   
   function fit_into_circle($file) {
 	//indicate the path and name for the new resized file
@@ -126,16 +158,18 @@
 	//Find out if height or width is bigger
 	list($width, $height) = getimagesize($resizedFile);
 	//Deal with image that has ridiculous proportions
-	if ($width/$height >= 5 || $height/$width >=5) {
+	if ($width/$height >= 8 || $height/$width >=8) {
 		//echo "Image is bad size";
 	}
 	else if($width >= $height) {
 		smart_resize_image($resizedFile , 0 , 120 , true , $resizedFile , false , false ,100 );
+		crop_resized_image($resizedFile, $width, $height);
 	}
 	else {
 		smart_resize_image($resizedFile , 120 , 0 , true , $resizedFile , false , false ,100 );
+		crop_resized_image($resizedFile, $width, $height);
 	}
-	
+			
   }
   
 

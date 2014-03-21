@@ -21,16 +21,36 @@ class Achievement implements JsonSerializable{
     *  Description of the Achievement (string)
     */
     private $description;
-
+    /**
+    *  Next Achievement (string)
+    */
+    private $next;
+    /**
+    *  Position of the Achievement (string)
+    */
+    private $position;
+    /**
+    *  Total Position of the Achievement (string)
+    */
+    private $total;
+    /**
+    *  achievementSet object
+    */
+    private $achievementSet;
     /**
      * Populate every field in achievement object
      * @param Array $p_info_array Array with all information on Achievement
      */
     public function setInfo($p_info_array) {
         $this->setName($p_info_array['name']);
-        $this->setId($p_info_array['achievement_id']);
+        $this->setId($p_info_array['id']);
         $this->setPoints($p_info_array['points']);
         $this->setDescription($p_info_array['description']);
+        $this->setNext($p_info_array['next']);
+        $this->setPosition($p_info_array['position']);
+        $this->setTotal($p_info_array['total']);
+        $this->setAchievementSet($p_info_array);
+
     }
     
     /**
@@ -49,6 +69,18 @@ class Achievement implements JsonSerializable{
     public function getDescription() {
         return $this->description;
     }
+    public function getNext() {
+        return $this->next;
+    }
+    public function getPosition() {
+        return $this->position;
+    }
+    public function getTotal() {
+        return $this->total;
+    }
+    public function getAchievementSet() {
+        return $this->achievementSet;
+    }
 
     /**
      * Setters
@@ -66,17 +98,42 @@ class Achievement implements JsonSerializable{
     public function setDescription($p_description) {
         $this->description = $p_description;
     }
+    public function setNext($p_achievement_next) {
+        $this->next = $p_achievement_next;
+    }
+    public function setPosition($p_achievement_position) {
+        $this->position = $p_achievement_position;
+    }
+    public function setTotal($p_total) {
+        $this->total = $p_total;
+    }
+    public function setAchievementSet($p_achievementSet) {
+        $this->achievementSet = $p_achievementSet;
 
+        //If the achievement actually has an achievementSet associated with it
+        if($p_achievementSet['set_id'] != null){
+            $this->achievementSet = new achievementSet();
+            $this->achievementSet->setId($p_achievementSet['set_id']);
+            $this->achievementSet->setName($p_achievementSet['set_name']);
+            $this->achievementSet->setDescription($p_achievementSet['set_description']);
+        }else{
+            $this->achievementSet = null;
+        }
+    }
     /**
      * Data to be serialized into JSON
      * @return Array
      */
     public function jsonSerialize() {
         return array(
-            'achievementId'   => $this->achievementId,
-            'achievementName' => $this->achievementName,
+            'id'   => $this->achievementId,
+            'name' => $this->achievementName,
             'points'          => $this->points,
-            'description'     => $this->description
+            'description'     => $this->description,
+            'next'   => $this->next,
+            'position' => $this->position,
+            'total'          => $this->total,
+            'set'     => $this->achievementSet
         );
     }
 }

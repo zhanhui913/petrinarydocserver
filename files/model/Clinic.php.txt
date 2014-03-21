@@ -34,9 +34,9 @@ class Clinic implements JsonSerializable{
     */
     private $latitude;
     /**
-    * Longtitude (float(10,6))
+    * Longitude (float(10,6))
     */
-    private $longtitude;
+    private $longitude;
     /**
     * Email address (string)
     */
@@ -82,7 +82,7 @@ class Clinic implements JsonSerializable{
         $this->setProvince($p_info_array['province']);
         $this->setPostalCode($p_info_array['postal_code']);
         $this->setLatitude($p_info_array['latitude']);
-        $this->setLongtitude($p_info_array['longtitude']);
+        $this->setLongitude($p_info_array['longitude']);
         $this->setEmail($p_info_array['email']);
         $this->setWebsite($p_info_array['website']);
         $this->setContactPerson($p_info_array['contact_person']);
@@ -118,8 +118,8 @@ class Clinic implements JsonSerializable{
     public function getLatitude() {
         return $this->latitude;
     }
-    public function getLongtitude() {
-        return $this->longtitude;
+    public function getLongitude() {
+        return $this->longitude;
     }
     public function getEmail() {
         return $this->clinicEmail;
@@ -172,8 +172,8 @@ class Clinic implements JsonSerializable{
     public function setLatitude($p_latitude) {
         $this->latitude = $p_latitude;
     }
-    public function setLongtitude($p_longtitude) {
-        $this->longtitude = $p_longtitude;
+    public function setLongitude($p_longitude) {
+        $this->longitude = $p_longitude;
     }
     public function setEmail($p_clinic_email) {
         $this->clinicEmail = $p_clinic_email;
@@ -213,15 +213,13 @@ class Clinic implements JsonSerializable{
             'clinicProvince' => $this->clinicProvince,
             'clinicPostalCode' => $this->clinicPostalCode,
             'latitude' => $this->latitude,
-            'longtitude' => $this->longtitude,
+            'longitude' => $this->longitude,
             'clinicEmail' => $this->clinicEmail,
             'website' => $this->website,
             'contactPerson' => $this->contactPerson,
             'phone' => $this->phone,
             'active' => $this->active,
             'expiration' => $this->expiration,
-            'pass' => $this->pass,
-            'salt' => $this->salt
         );
     }
 }
