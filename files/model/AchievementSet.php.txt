@@ -19,13 +19,25 @@ class AchievementSet implements JsonSerializable{
     private $description;
 
     /**
+     * Array of species which are elligible to receive this set of achievements.
+     */
+    private $species;
+
+    /**
      * Populate every field in achievement object
      * @param Array $p_info_array Array with all information on Achievement
      */
     public function setInfo($p_info_array) {
+
         $this->setName($p_info_array['name']);
+
         $this->setId($p_info_array['id']);
+
         $this->setDescription($p_info_array['description']);
+
+        if (isset($p_info_array['species'])) {
+            $this->setSpecies($p_info_array['species']);
+        }
     }
     
     /**
@@ -39,6 +51,9 @@ class AchievementSet implements JsonSerializable{
     }
     public function getDescription() {
         return $this->description;
+    }
+    public function getSpecies() {
+        return $this->species;
     }
 
     /**
@@ -54,6 +69,9 @@ class AchievementSet implements JsonSerializable{
     public function setDescription($p_description) {
         $this->description = $p_description;
     }
+    public function setSpecies($p_species) {
+        $this->species = $p_species;
+    }
 
     /**
      * Data to be serialized into JSON
@@ -61,9 +79,10 @@ class AchievementSet implements JsonSerializable{
      */
     public function jsonSerialize() {
         return array(
-            'achievementSetId'   => $this->achievementSetId,
-            'achievementSetName' => $this->achievementSetName,
-            'description'     => $this->description
+            'id'            => $this->achievementSetId,
+            'name'          => $this->achievementSetName,
+            'description'   => $this->description,
+            'species'       => $this->species,
         );
     }
 }

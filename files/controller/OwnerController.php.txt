@@ -41,7 +41,9 @@ class OwnerController implements RouteController {
 			
 			$email = $args['newEmail'];
 			$username = $args['newUsername'];
-			$password = 'password';
+			
+			// Generate random password
+			$password = $this->generatePassword();
 		}
 		
 		// Generate salt.  TODO: introduce measure of randomness to salt creation.
@@ -60,30 +62,83 @@ class OwnerController implements RouteController {
 			''
 		);
 
+		// Email pet owner with new account information, only when the account
+		// is created by a clinic
+		if ($successfullyCreated && !(isset($args['password']))) {
+				
+			$subject = 'Petrinary Account Created';
+			$message = "Hello and thank you for using Petrinary!\r\n" .
+					"Your password is: " . $password . "\r\n\r\n\r\n" .
+					"The Petrinary Team";
+			$message = wordwrap($message, 70);
+			$from = 'From: petrinary@gmail.com';
+			mail($email, $subject, $message, $from);
+		}
+		else {
+			
+			if($successfullyCreated) {
+				set_session_variables($username, $dbpass, ROLE_OWNER, $email);
+				
+				$subject = 'Petrinary Account Created';
+				$message = "Hello " . $username . "!\r\n\r\n" . 
+						"Thank you for using Petrinary!\r\n\r\n\r\n" .
+						"The Petrinary Team";
+				$message = wordwrap($message, 70);
+				$from = 'From: petrinary@gmail.com';
+				mail($email, $subject, $message, $from);
+			}
+		}
+		
 		echo json_encode(array(
 			'successfullyCreated' => $successfullyCreated,
 			'email' => $email
 		));
+	
 	}
 
 	public function show(&$args) {
 
+		// authorize action
+		authorize($this->app);
+		if ($_SESSION['role'] == ROLE_ADMIN) {
+			$getOnlyActivePets = 0;
+		} else {
+			$getOnlyActivePets = 1;
+		}
+
 		$ownerId = $args['ownerId'];
 		$returnType = $_SERVER['HTTP_ACCEPT'];
-		if ($returnType == 'text/json') {
-			$owner = $this->mc->getOwnerObject($ownerId);
+		$owner = $this->mc->getOwnerObject($ownerId, $getOnlyActivePets);
+
+		// If pet id is set, ensure that that the pet belongs to the owner being
+		// requested
+		if (isset($args['petId']) && $owner != null) {
+			$pets = $owner->getPetList();
+			$isValidPetId = false;
+			for ($i = 0; $i < sizeof($pets); $i++) {
+				if ($pets[$i]->getPetId() == $args['petId']) {
+					$isValidPetId = true;
+				}
+			}
+			if (!$isValidPetId && $returnType == 'text/json') $this->app->halt(404);
+			else if (!$isValidPetId) $this->app->redirect('/404');
+		}
+
+		if ($owner == null && $returnType == 'text/json') {
+			$this->app->halt(404);
+		} else if ($owner == null) {
+			$this->app->redirect('/404');
+		} else if ($returnType == 'text/json') {
 			if ($owner != null) {
 				echo json_encode($owner);
-			} else {
-				$this->app->halt(404);
 			}		
 		} else {
 			$this->app->render('pet_owner-tpl.php', array('ownerId' => $ownerId));
 		}
-
 	}
 
 	public function update(&$args) {
+		
 		if (!isset($args['id'])) {
 			$this->app->halt(400);
 		}
@@ -102,7 +157,7 @@ class OwnerController implements RouteController {
 				$ret = $this->mc->
 					updateOwnerPassword($args['id'], $newPw, $salt);
 
-				set_session_variables($args['id'], $newPw, 'owner');
+				set_session_variables($args['id'], $newPw, 'owner', $credentials['email']);
 
 				echo json_encode(array('wasSuccessful' => $ret));
 
@@ -113,12 +168,38 @@ class OwnerController implements RouteController {
 						'wasSuccessful' => false
 					)
 				);
-				return;
 			}
+		} else {
+			$ret = $this->mc->updateOwnerActiveStatus($args['email'], $args['isActive']);
+			echo json_encode(
+				array(
+					'wasSuccessful' => $ret
+				)
+			);
 		}
-	}
-	public function destroy(&$args) {}
 
+	}
+	public function destroy(&$args) {
+
+		$ret = $this->mc->updateOwnerActiveStatus($args['id'], 0);
+		echo json_encode(
+			array(
+				'wasSuccessful' => $ret
+			)
+		);		
+
+	}
+	
+	private function generatePassword() {
+		$alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
+		$pass = array(); //remember to declare $pass as an array
+		$alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
+		for ($i = 0; $i < 8; $i++) {
+			$n = rand(0, $alphaLength);
+			$pass[] = $alphabet[$n];
+		}
+		return implode($pass); //turn the array into a string
+	}
 }
 
 ?>

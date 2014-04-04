@@ -15,6 +15,7 @@ class Species implements JsonSerializable {
 	private $name;
 
 
+
 	/**
 	*	Populate every field in Species object
 	* @param Array $p_info_array Array with all information on Species
@@ -22,7 +23,6 @@ class Species implements JsonSerializable {
 	public function setInfo($p_info_array){
 		$this->setId($p_info_array['id']);
 		$this->setName($p_info_array['name']);
-
 	}
 
 	/**
@@ -35,6 +35,7 @@ class Species implements JsonSerializable {
 	public function getName(){
 		return $this->name;
 	}
+
 
 
 	/**
@@ -50,14 +51,15 @@ class Species implements JsonSerializable {
 
 
 
+
 	/**
 	 * Data to be serialized into JSON
 	 * @return Array
 	 */
 	public function jsonSerialize() {
 		return array(
-			'id'=>$this->id,
-			'name'=>$this->name,
+			'id'			=> $this->id,
+			'name' 		=> $this->name,
 		);
 	}
 

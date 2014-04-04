@@ -31,6 +31,7 @@ class InterestController implements RouteController {
     }
 
     $interest = json_decode($args['interest'], true);
+    // TODO check file type and file size
     if (1 == true) {
 
       $descr = $interest['description']; 
@@ -38,10 +39,9 @@ class InterestController implements RouteController {
       $img = $args['imgFile'];
       // Upload file to server.
       // We're going to do it quick and dirty.
-      $picturesHome = '/api/user_pictures/interests';
+      $picturesHome = '/api/user_pictures/interests/';
       $hash = md5($categoryId . time());
       $root = $_SERVER['DOCUMENT_ROOT'];
-
 
       umask(0);
       if (is_dir($root . $picturesHome . $hash) == false) {
@@ -49,14 +49,16 @@ class InterestController implements RouteController {
         chmod($root . $picturesHome . $hash, 0777);
       }
 
+      // Keep only last 10 characters of file name in case file name is too
+      // long to be stored in the database.
+      $name = substr($img['name'], -10);
       $timestamp = time();
-      $src = $picturesHome . $hash . '/' . $timestamp . '_' .
-        $img['name'];
+      $src = $picturesHome . $hash . '/' . $timestamp . '_' . $name;
 
 
       move_uploaded_file($img["tmp_name"], $root . $src);
 
-      fit_into_circle($src);
+      //fit_into_circle($src);
 
       $wasSuccessful = $this->mc->addInterest($descr, $categoryId, $src);
 
@@ -83,6 +85,9 @@ class InterestController implements RouteController {
     $descr = $interest['description']; 
     $categoryId = $interest['category']['id'];
 
+    // Grab old src for deletion purposes.
+    $oldSrc = $interest['src'];
+
     if (isset($args['imgFile'])) {
 
       $img = $args['imgFile'];
@@ -99,21 +104,32 @@ class InterestController implements RouteController {
         chmod($root . $picturesHome . $hash, 0777);
       }
 
+      // Keep only last 10 characters of file name in case file name is too
+      // long to be stored in the database.
+      $name = substr($img['name'], -10);
       $timestamp = time();
-      $src = $picturesHome . $hash . '/' . $timestamp . '_' .
-        $img['name'];
+      $src = $picturesHome . $hash . '/' . $timestamp . '_' . $name;
 
       move_uploaded_file($img["tmp_name"], $root . $src);
 
-      fit_into_circle($src);
-
-
+      //fit_into_circle($src);
       $wasSuccessful = 
         $this->mc->editInterestDescription($id, $descr);
       $wasSuccessful =
         $this->mc->editInterestCategory($id, $categoryId) && $wasSuccessful;
-      $wasSuccessful =
-        $this->mc->editInterestSrc($id, $src) && $wasSuccessful;
+      $wasSrcEditSuccessful =
+        $this->mc->editInterestSrc($id, $src);
+
+      $wasSuccessful = $wasSuccessful && $wasSrcEditSuccessful;
+
+      // If update was successful, remove old image file, remove newly
+      // saved file.
+      if ($wasSrcEditSuccessful) {
+        unlink($root . $oldSrc);
+      } else {
+        unlink($root . $src);
+        $src = $oldSrc;
+      }
 
       //fit_into_circle($src);
 
@@ -122,7 +138,7 @@ class InterestController implements RouteController {
     
     } else {
       $wasSuccessful = 
-        $this->mc->editInterestDescription($id, $descr)   &&
+        $this->mc->editInterestDescription($id, $descr)   ||
         $this->mc->editInterestCategory($id, $categoryId);
 
       echo json_encode(array('wasSuccessful' => $wasSuccessful, 'src' => null));

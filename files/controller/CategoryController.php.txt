@@ -24,29 +24,12 @@ class CategoryController implements RouteController {
   }
 
   public function create(&$args) {
-   /* 
-    if (!isset($args['interest'])) {
-      $this->app->halt(400);
-    }
 
-    $interest = json_decode($args['interest'], true);
-    if (isset($interest['description'])    &&
-        isset($interest['category']['id']) &&
-        isset($interest['src'])) {
-
-      $descr = $interest['description']; 
-      $categoryId = $interest['category']['id'];
-      $src = $interest['src'];
-
-      $wasSuccessful = $this->mc->addInterest($descr, $categoryId, $src);
-
-      echo json_encode(array('wasSuccessful' => $wasSuccessful));
-    
-    } else {
-      // Else, request was malformed.
-      //$this->app->halt(400);
-    }
-    */
+    echo json_encode(
+      array(
+        'id' => $this->mc->addCategory($args['description']),
+      )
+    ); 
   }
 
   public function show(&$args) {
@@ -55,7 +38,13 @@ class CategoryController implements RouteController {
   }
 
   public function update(&$args) {}
-  public function destroy(&$args) {}
+  public function destroy(&$args) {
+    echo json_encode(
+      array(
+        'wasSuccessful' => $this->mc->deleteCategory($args['id'])
+      )
+    );
+  }
 
 }
 

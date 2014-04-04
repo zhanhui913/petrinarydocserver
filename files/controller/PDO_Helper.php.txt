@@ -66,7 +66,7 @@ class PDOHelper{
      */
     public function checkAdminLogin($p_email){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT pass,salt ".
+            "SELECT pass,salt,username,email ".
             "FROM ADMIN ".
             "WHERE email=?;");
 
@@ -147,7 +147,7 @@ class PDOHelper{
      */
     public function checkOwnerId($p_id){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT pass,salt,active ".
+            "SELECT pass,salt,active,email,username ".
             "FROM OWNER ".
             "WHERE email=? OR username=?;");
         $stmt->bindParam(1,$p_id);
@@ -210,7 +210,7 @@ class PDOHelper{
     public function getOwnerInfo($p_email){
 
         $stmt = $this->adapter->conn->prepare(
-                "SELECT email,username,pic_path,active ".
+                "SELECT email,username,pic_path,active,net_points ".
                 "FROM OWNER ".
                 "WHERE email=?;");
         $stmt->bindParam(1,$p_email);
@@ -233,7 +233,7 @@ class PDOHelper{
     public function getOwnerById($p_id){
 
         $stmt = $this->adapter->conn->prepare(
-                "SELECT email,username,pic_path,active ".
+                "SELECT email,username,pic_path,active,net_points ".
                 "FROM OWNER ".
                 "WHERE email=? OR username=?;");
         $stmt->bindParam(1,$p_id);
@@ -366,9 +366,10 @@ class PDOHelper{
      */
     public function getPetInfoQuery($p_pet_id){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT * ".
-            "FROM PET ".
-            "WHERE pet_id = ?;");
+            "SELECT P.*,SP.name AS species_name,".
+            "DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT(birthday, '%Y') - (DATE_FORMAT(NOW(), '00-%m-%d') < DATE_FORMAT(birthday, '00-%m-%d')) AS age ".
+            "FROM PET P,SPECIES SP ".
+            "WHERE P.pet_id = ? AND P.species_id = SP.id ;");
         $stmt->bindParam(1,$p_pet_id);
 
         $result = null;
@@ -382,16 +383,36 @@ class PDOHelper{
     }
 
     /** 
+     * Get all the active pet id for a specific owner.
+     * @param String $p_email Owner email
+     * @return Array $result Returns an array of pet id, null otherwise.
+     */
+    public function getAllActivePetId($p_email){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT pet_id ".
+            "FROM PET ".
+            "WHERE active = 1 AND owner_id = ?;");
+        $stmt->bindParam(1,$p_email);
+        
+        $result = null;
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        return $result;
+    }
+
+    /** 
      * Get all the pet id for a specific owner.
      * @param String $p_email Owner email
      * @return Array $result Returns an array of pet id, null otherwise.
-     * TODO: remove actve=1 from query below after sprint 4
      */
     public function getAllPetId($p_email){
         $stmt = $this->adapter->conn->prepare(
             "SELECT pet_id ".
             "FROM PET ".
-            "WHERE active = 1 AND owner_id = ?;");
+            "WHERE owner_id = ?;");
         $stmt->bindParam(1,$p_email);
         
         $result = null;
@@ -415,10 +436,9 @@ class PDOHelper{
             "name = ?, ".
             "birthday = ?, ".
             "sex = ?, ".
-            "age = ?, ".
             "colour = ?, ".
             "breed = ?, ".
-            "species = ?, ".
+            "species_id = ?, ".
             "isNeutered = ?, ".
             "clinic_id = ?, ".
             "active = ? ".
@@ -426,14 +446,13 @@ class PDOHelper{
         $stmt->bindParam(1,$p_pet['name']);
         $stmt->bindParam(2,$p_pet['birthday']);
         $stmt->bindParam(3,$p_pet['sex']);
-        $stmt->bindParam(4,$p_pet['age']);
-        $stmt->bindParam(5,$p_pet['colour']);
-        $stmt->bindParam(6,$p_pet['breed']);
-        $stmt->bindParam(7,$p_pet['species']);
-        $stmt->bindParam(8,$p_pet['isNeutered']);
-        $stmt->bindParam(9,$p_pet['clinic_id']);
-        $stmt->bindParam(10,$p_pet['active']);
-        $stmt->bindParam(11,$p_petId);
+        $stmt->bindParam(4,$p_pet['colour']);
+        $stmt->bindParam(5,$p_pet['breed']);
+        $stmt->bindParam(6,$p_pet['species']['id']);
+        $stmt->bindParam(7,$p_pet['isNeutered']);
+        $stmt->bindParam(8,$p_pet['clinic_id']);
+        $stmt->bindParam(9,strval($p_pet['active']));
+        $stmt->bindParam(10,$p_petId);
 
         $result = null;
         try{
@@ -468,21 +487,19 @@ class PDOHelper{
             "?,".
             "?,".
             "?,".
-            "?,".
             "?);");
         $stmt->bindParam(1,$p_pet['name']);
         $stmt->bindParam(2,$p_pet['pet_id']);
         $stmt->bindParam(3,$p_pet['owner_id']);
         $stmt->bindParam(4,$p_pet['birthday']);
         $stmt->bindParam(5,$p_pet['sex']);
-        $stmt->bindParam(6,$p_pet['age']);
-        $stmt->bindParam(7,$p_pet['colour']);
-        $stmt->bindParam(8,$p_pet['breed']);
-        $stmt->bindParam(9,$p_pet['species']);
-        $stmt->bindParam(10,$p_pet['isNeutered']);
-        $stmt->bindParam(11,$p_pet['net_points']);
-        $stmt->bindParam(12,$p_pet['clinic_id']);
-        $stmt->bindParam(13,$p_pet['active']);
+        $stmt->bindParam(6,$p_pet['colour']);
+        $stmt->bindParam(7,$p_pet['breed']);
+        $stmt->bindParam(8,$p_pet['species_id']);
+        $stmt->bindParam(9,$p_pet['isNeutered']);
+        $stmt->bindParam(10,$p_pet['net_points']);
+        $stmt->bindParam(11,$p_pet['clinic_id']);
+        $stmt->bindParam(12,$p_pet['active']);
         $result=null;
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
@@ -947,6 +964,11 @@ class PDOHelper{
 
         //Concat time witht pet ID = pic ID
         $pic_id = $p_pet_id."_".$time;
+        
+        //Check if the pet has six or more pictures
+        if($this->getPictureCount($p_pet_id) >= 6){
+            return null;
+        }
 
         //Insert into db
         $stmt = $this->adapter->conn->prepare(
@@ -1076,6 +1098,27 @@ class PDOHelper{
         return false;
     }
 
+    /**
+      * Get the current number of pictures for a pet
+      * @param  String $p_pet_id Pet ID
+      * @return Int Picture Count
+      */
+    public function getPictureCount($p_pet_id) {
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT COUNT(*) as count FROM PICTURES ".  
+            "WHERE pet_id=?");
+        $stmt->bindParam(1,$p_pet_id);
+
+        $result=null;
+        try{
+            $result = (int)$this->adapter->executeFetchPrepared($stmt)[0]['count'];
+            return $result;
+        }catch(PDOException $e){
+            return null;
+        }
+        return null;
+    }
+
     /**************************************************************************
     *
     *    Clinic Methods
@@ -1102,8 +1145,9 @@ class PDOHelper{
      * @return Array $result List of clinic details
      */
     public function getClinicById($p_clinic_id){
-        $stmt = $this->adapter->conn->prepare("SELECT * FROM CLINIC WHERE clinic_id = ?"); 
-	$stmt->bindParam(1, $p_clinic_id); 
+        $stmt = $this->adapter->conn->prepare("SELECT * FROM CLINIC WHERE clinic_id = ? OR email = ?"); 
+        $stmt->bindParam(1, $p_clinic_id);
+        $stmt->bindParam(2, $p_clinic_id);
         $result = null;
         try{
             $result = $this->adapter->executeFetchPrepared($stmt)[0];
@@ -1149,7 +1193,6 @@ class PDOHelper{
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
-            echo $e;
             return false;
         }
         if($result > 0) {
@@ -1200,7 +1243,6 @@ class PDOHelper{
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
-            echo $e;
             return false;
         }
         if($result > 0) {
@@ -1373,6 +1415,44 @@ class PDOHelper{
     *    Achievement Set Methods
     *
     /**************************************************************************/
+    
+
+
+    public function getAchievementSetPointsForPet($p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT sum(IFNULL(AR.points,0)) AS current_points,".
+            "sum(A.points) AS total_set_points,".
+            "A.set_id FROM ".
+            "(SELECT set_id FROM PET P JOIN SPECIES_ACHIEVEMENT_SET SA ON P.species_id = SA.species_id WHERE P.pet_id = ? ) AS SETS ".
+            "JOIN ACHIEVEMENT A ON SETS.set_id = A.set_id LEFT JOIN ACHIEVEMENT_RECORD AR ON A.id = AR.achievement_id GROUP BY A.set_id ;");
+        $stmt->bindParam(1,$p_pet_id);
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Get all species which are elligible for the given achievement set.
+     * @param {String} $p_achievementSet_id The id of the achievement set for 
+     * which we want to retrieve the species list. 
+     * @return Array of rows from species table.
+     */
+    public function getSpeciesForAchievementSet($p_achievementSet_id) {
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT s.name, s.id FROM SPECIES AS s, ".
+            "SPECIES_ACHIEVEMENT_SET AS a WHERE s.id = a.species_id " .
+            "AND a.set_id = ?");
+        $stmt->bindParam(1, $p_achievementSet_id);
+        try {
+            return $this->adapter->executeFetchPrepared($stmt);
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
 
     /** 
      * Get a achievement set based on achievement ID
@@ -1406,7 +1486,6 @@ class PDOHelper{
         }
         return $result;
     }
-
 
     /**
      * Adds an achievement set into the db
@@ -1443,12 +1522,15 @@ class PDOHelper{
      * @param String $p_achievement_id The achievement ID
      * @return Boolean Returns true if deleted successfully, false otherwise
      */
-    public function deleteAchievementSet($p_achievement_id){
+    public function deleteAchievementSet($p_achievementSet_id){
         
         $stmt = $this->adapter->conn->prepare(
-            "DELETE FROM ACHIEVEMENT WHERE ".
-            "id = ?;");
-        $stmt->bindParam(1,$p_achievement_id);
+            "UPDATE ACHIEVEMENT set next = null, position = null, total = null WHERE set_id = ?;
+            UPDATE ACHIEVEMENT_RECORD set next = null, position = null, total = null WHERE set_id = ?;
+            DELETE FROM ACHIEVEMENT_SET WHERE id = ?;");
+        $stmt->bindParam(1,$p_achievementSet_id);
+        $stmt->bindParam(2,$p_achievementSet_id);
+        $stmt->bindParam(3,$p_achievementSet_id);
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
@@ -1550,7 +1632,17 @@ class PDOHelper{
      */
     public function getAchievement($p_achievement_id){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "SELECT A.pic_path,".
+            "A.id,".
+            "A.points,".
+            "A.name,".
+            "A.description,".
+            "A.next,".
+            "A.position,".
+            "A.total,".
+            "A.set_id,".
+            "S.name as set_name,".
+            "S.description as set_description ".
             "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
             "ON A.set_id = S.id ".
             "WHERE A.id = ?;");
@@ -1581,7 +1673,7 @@ class PDOHelper{
             "ON A.set_id = S.id;");
         try{
             $result = $this->adapter->executeFetchPrepared($stmt);
-        }catch(PDOException $e){
+        }catch(PDOException $e) {
             return null;
         }
         
@@ -1595,10 +1687,10 @@ class PDOHelper{
      */
     public function getAllAchievementForSet($p_achievementSet_id){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,S.name as set_name,S.description as set_description ".
+            "SELECT A.id,A.points,A.name,A.description,A.next,A.position,A.total,A.set_id,A.pic_path,S.name as set_name,S.description as set_description ".
             "FROM ACHIEVEMENT A LEFT JOIN ACHIEVEMENT_SET S ".
             "ON A.set_id = S.id ".
-            "WHERE A.set_id = ?;");
+            "WHERE A.set_id = ? ORDER BY A.position;");
         $stmt->bindParam(1,$p_achievementSet_id);
         
         try{
@@ -1628,7 +1720,86 @@ class PDOHelper{
         }
         return $result;
     }
+    
+    /**
+     * Adds achievement to the set
+     * @param String $p_achievement_id
+     * @param String $p_set_id
+     */
+    public function addAchievementToSet($p_achievement_id,$p_set_id){
+        #update total for each achievement for the set in ACHIEVEMENT table
+        $stmt1 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET total = (total + 1)  WHERE set_id = ? AND id <> ?;");
+        #update total for each achievement record for the set in ACHIEVEMENT SET
+        $stmt2 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET total = (total + 1)  WHERE set_id = ?;");
+        #Get the info of the last achievement of the set
+        $stmt3 = $this->adapter->conn->prepare("SELECT * FROM ACHIEVEMENT WHERE position = total-1 AND set_id = ? AND id <> ?;");
+        #Set the new achievement id as the last achievement's next in ACHIEVEMENT table
+        $stmt4 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ? WHERE position = total-1 AND set_id = ? AND id <> ?;");
+        #Set the new achievement id as the last achievement's next in ACHIEVEMENT_RECORD table (if any pets already achieved the last achievement of the set)
+        $stmt5 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ? WHERE total-1 = position AND set_id = ?;");
+        #Set the new ahcievement as the last achievment of the set in ACHIEVEMENT table
+        $stmt6 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET position = ?, total = ?, set_id =? WHERE id = ?;");
+        #Set the new ahcievement as the last achievment of the set in ACHIEVEMENT_RECORD table (if any pets already achieved the last achievement of the set)
+        $stmt7 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET position = ?, total = ?, set_id =? WHERE achievement_id = ?;");
 
+
+        $this->adapter->conn->beginTransaction();
+
+        $stmt1->bindParam(1,$p_set_id);
+        $stmt1->bindParam(2, $p_achievement_id);
+
+        $stmt2->bindParam(1,$p_set_id);
+
+        $stmt3->bindParam(1,$p_set_id);
+        $stmt3->bindParam(2,$p_achievement_id);
+        try{
+             
+            $result = $this->adapter->executeUpdatePrepared($stmt1);
+            $result = $this->adapter->executeUpdatePrepared($stmt2);
+            $result2 = $this->adapter->executeFetchPrepared($stmt3)[0];
+            
+            $stmt4->bindParam(1,$p_achievement_id);
+            $stmt4->bindParam(2,$p_set_id);
+            $stmt4->bindParam(3,$p_achievement_id);
+            
+            $result = $this->adapter->executeUpdatePrepared($stmt4);
+
+            $stmt5->bindParam(1,$p_achievement_id);
+            $stmt5->bindParam(2,$p_set_id);
+            $result = $this->adapter->executeUpdatePrepared($stmt5);
+
+            $stmt6->bindParam(1,$result2['total']);
+            $stmt6->bindParam(2,$result2['total']);
+            $stmt6->bindParam(3,$result2['set_id']);
+            $stmt6->bindParam(4,$p_achievement_id);
+            //$result = $this->adapter->executeUpdatePrepared($stmt6);
+
+
+            // get these by executing achievement id instead
+            $stmt7->bindParam(1,$result2['total']);
+            $stmt7->bindParam(2,$result2['total']);
+            $stmt7->bindParam(3,$result2['set_id']);
+            $stmt7->bindParam(4,$p_achievement_id);
+            //$result = $this->adapter->executeUpdatePrepared($stmt7);
+
+            $success = $this->adapter->conn->commit();
+
+        }catch(PDOException $e){
+            $this->adapter->conn->rollBack();
+            return false;
+        }catch(ErrorException $e){
+            $this->adapter->conn->rollBack();
+            return false;
+        }catch(Exception $e){
+            $this->adapter->conn->rollBack();
+        	return false;
+        }
+
+        if($success){
+            return true;
+        }
+        return false;
+    }
     /**
      * Adds an achievement into the db
      * @param Integer $p_achievement_points The achievement points
@@ -1640,13 +1811,13 @@ class PDOHelper{
      * @param String $p_achievement_setId The achievement's achievementSet's ID
      * @return String $uuid Returns a UUID if successful, else returns null
      */
-    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
-        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId){
+    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_description,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId, $p_pic_path){
         
         $uuid = $this->v4();
         
         $stmt = $this->adapter->conn->prepare(
-        "INSERT INTO ACHIEVEMENT(id,points,name,description,next,total,position,set_id) ".
+        "INSERT INTO ACHIEVEMENT(id,points,name,description,next,total,position,set_id,pic_path) ".
         "VALUES( ".
             "?,".
             "?,".
@@ -1655,6 +1826,7 @@ class PDOHelper{
             "?,".
             "?,".
             "?,".
+	        "?,".
             "?);");
         $stmt->bindParam(1,$uuid);
         $stmt->bindParam(2,$p_achievement_points);
@@ -1664,6 +1836,7 @@ class PDOHelper{
         $stmt->bindParam(6,$p_achievement_total);
         $stmt->bindParam(7,$p_achievement_position);
         $stmt->bindParam(8,$p_achievement_setId);
+	    $stmt->bindParam(9,$p_pic_path);
         try{
             $result = $this->adapter->executeUpdatePrepared($stmt);
         }catch(PDOException $e){
@@ -1677,22 +1850,263 @@ class PDOHelper{
     }
 
     /**
-     * Deletes an achievement from the database
+     * Update the position of an achievement in a set
+     * @param String $p_achievement_id The achievement ID
+     * @param String $p_achievement_position The new desired position of the achievement
+     * @return Boolean Returns true if deleted successfully, false otherwise
+     */
+    public function reorderAchievementSet($p_achievement_id, $p_achievement_position){
+        # Get the achievements we are going to change
+        # Achievement we are moving (where id = the current achievement we are re-ordering)
+        $stmt1 = $this->adapter->conn->prepare("SELECT * FROM ACHIEVEMENT WHERE id = ?;");
+
+        # Achievement that we are taking it's place
+        $stmt4 = $this->adapter->conn->prepare("SELECT * FROM ACHIEVEMENT WHERE position = ? AND set_id = ?;");
+
+        # Update the positions of the achievements to reflect the re-ordering (MOVING EARLIER IN THE LIST)
+        $stmt6 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET position = (position + 1) WHERE position >= ? AND position < ? AND set_id = ?;");
+        $stmt7 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET position = (position + 1) WHERE position >= ? AND position < ? AND set_id = ?;");
+
+        # Update the positions of the achievements to reflect the re-ordering (MOVING FURTHER IN THE LIST)
+        $stmt6A = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET position = (position - 1) WHERE position <= ? AND position > ? AND set_id = ?;");
+        $stmt7A = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET position = (position - 1) WHERE position <= ? AND position > ? AND set_id = ?;");
+
+        # Update the achievement before the old position to point to the achievement after the achievement old position
+        $stmt8 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ? WHERE next = ?;");
+        $stmt9 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ? WHERE next = ?;");
+
+        # Update the achievement before the new position to point to the achievement after the achievement new position
+        $stmt10 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ? WHERE next = ?;");
+        $stmt11 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ? WHERE next = ?;");
+
+        $stmt10A = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ? WHERE id = ?;");
+        $stmt11A = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ? WHERE achievement_id = ?;");
+
+        # Update the achievement we are changing with the new information
+        $stmt12 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ?, position = ? WHERE id = ?;");
+        $stmt13 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ?, position = ? WHERE achievement_id = ?;");
+
+        # Begin the transaction
+        $this->adapter->conn->beginTransaction();
+
+
+
+        try{
+            $stmt1->bindParam(1,$p_achievement_id);
+            $result = $this->adapter->executeFetchPrepared($stmt1);
+            if (isset($result[0])){
+                $current_achievement = $result[0];
+            }else{
+                throw new Exception('Achievement Does Not Exist1');
+            }
+
+            if ($current_achievement['position'] == $p_achievement_position){
+                throw new Exception('Why are you setting the new position to current position?');
+            }
+            if ($current_achievement['total'] < $p_achievement_position){
+                throw new Exception('Why are you setting the new position to an impossible position?');
+            }
+
+            $stmt4->bindParam(1,$p_achievement_position);
+            $stmt4->bindParam(2,$current_achievement['set_id']);
+            $result = $this->adapter->executeFetchPrepared($stmt4);
+            
+            if (isset($result[0])){
+                $new_achievement_position = $result[0];
+            }else{
+                throw new Exception('Achievement Does Not Exist4');
+            }
+
+            //var_dump($current_achievement);
+            //var_dump($old_achievement_next);
+
+            //UPDATE THE POSITIONS BASED ON ACHIEVEMENT MOVEMENT
+            if ($p_achievement_position > $current_achievement['position']){
+                $stmt6A->bindParam(1,$p_achievement_position);
+                $stmt6A->bindParam(2,$current_achievement['position']);
+                $stmt6A->bindParam(3,$current_achievement['set_id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt6A);
+
+                $stmt7A->bindParam(1,$p_achievement_position);
+                $stmt7A->bindParam(2,$current_achievement['position']);
+                $stmt7A->bindParam(3,$current_achievement['set_id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt7A);
+            } else {
+                $stmt6->bindParam(1,$p_achievement_position);
+                $stmt6->bindParam(2,$current_achievement['position']);
+                $stmt6->bindParam(3,$current_achievement['set_id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt6);
+
+                $stmt7->bindParam(1,$p_achievement_position);
+                $stmt7->bindParam(2,$current_achievement['position']);
+                $stmt7->bindParam(3,$current_achievement['set_id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt7);
+            }
+            
+            //CHECK IF WE ARE MOVING THE LAST NODE, IF WE ARE SET THE SECOND LAST TO POINT TO NULL
+            //IF NOT HAVE THE SECOND LAST NODE POINT TO THE NEXT ACHIEVEMENT
+            if ($current_achievement['position'] != $current_achievement['total']){
+                $stmt8->bindParam(1,$current_achievement['next']);
+                $stmt8->bindParam(2,$current_achievement['id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt8);
+
+                $stmt9->bindParam(1,$current_achievement['next']);
+                $stmt9->bindParam(2,$current_achievement['id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt9);
+            }else{
+                $stmt8->bindParam(1,$PDOSUCKS, PDO::PARAM_NULL);
+                $stmt8->bindParam(2,$current_achievement['id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt8);
+
+                $stmt9->bindParam(1,$PDOSUCKS, PDO::PARAM_NULL);
+                $stmt9->bindParam(2,$current_achievement['id']);
+                $result = $this->adapter->executeUpdatePrepared($stmt9);
+            }
+
+            //IF WE ARENT MOVING TO THE FIRST POSITION 
+            //THEN UPDATE THE NEXT VALUES OF THE NODE BEFORE THE NEW POSITION
+            if ($p_achievement_position != 1){
+                if ($p_achievement_position != $current_achievement['total']){
+                    $stmt10->bindParam(2,$new_achievement_position['next']);
+                    $stmt10->bindParam(1,$current_achievement['id']);
+                    $result = $this->adapter->executeUpdatePrepared($stmt10);
+
+                    $stmt11->bindParam(2,$new_achievement_position['next']);
+                    $stmt11->bindParam(1,$current_achievement['id']);
+                    $result = $this->adapter->executeUpdatePrepared($stmt11);
+                }else{
+                    $stmt10A->bindParam(2,$new_achievement_position['id']);
+                    $stmt10A->bindParam(1,$current_achievement['id']);
+                    $result = $this->adapter->executeUpdatePrepared($stmt10A);
+                    
+                    $stmt11A->bindParam(2,$new_achievement_position['id']);
+                    $stmt11A->bindParam(1,$current_achievement['id']);
+                    $result = $this->adapter->executeUpdatePrepared($stmt11A);
+                }
+            }
+
+
+            if ($current_achievement['position'] < $p_achievement_position){
+                $stmt12->bindParam(1,$new_achievement_position['next']);
+                $stmt13->bindParam(1,$new_achievement_position['next']);
+            }else{
+                $stmt12->bindParam(1,$new_achievement_position['id']);
+                $stmt13->bindParam(1,$new_achievement_position['id']);
+            }
+            $stmt12->bindParam(2,$p_achievement_position);
+            $stmt12->bindParam(3,$current_achievement['id']);
+            $result = $this->adapter->executeUpdatePrepared($stmt12);
+
+            
+            $stmt13->bindParam(2,$p_achievement_position);
+            $stmt13->bindParam(3,$current_achievement['id']);
+            $result = $this->adapter->executeUpdatePrepared($stmt13);
+            
+            # Commit and check if it a success
+            $success = $this->adapter->conn->commit();
+        }catch(PDOException $e){
+             $this->adapter->conn->rollBack();
+            return false;
+        }catch(ErrorException $e){
+             $this->adapter->conn->rollBack();
+            return false;
+        }catch(Exception $e){
+             $this->adapter->conn->rollBack();
+            return false;
+        }
+        if($success){
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
+     * Deletes an achievement from the database and propogate the deletion
      * @param String $p_achievement_id The achievement ID
      * @return Boolean Returns true if deleted successfully, false otherwise
      */
-    public function deleteAchievement($p_achievementSet_id){
+    public function deleteAchievement($p_achievement_id){
+        $stmt1 = $this->adapter->conn->prepare("SELECT next FROM ACHIEVEMENT WHERE id = ?;");
+        $stmt2 = $this->adapter->conn->prepare("SELECT position FROM ACHIEVEMENT WHERE id = ?;");
+        $stmt3 = $this->adapter->conn->prepare("SELECT set_id FROM ACHIEVEMENT WHERE id = ?;");
+        $stmt4 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET next = ? WHERE next = ?;");
+        $stmt5 = $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET position = (position - 1) WHERE set_id = ? AND position > ?;");
+        $stmt6= $this->adapter->conn->prepare("UPDATE ACHIEVEMENT_RECORD SET total = (total - 1) WHERE set_id = ?;");
+        $stmt7= $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET next = ? WHERE next = ?;");
+        $stmt8= $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET position = (position - 1) WHERE set_id = ? AND position > ?;");
+        $stmt9= $this->adapter->conn->prepare("UPDATE ACHIEVEMENT SET total = (total - 1) WHERE set_id = ?;");
+        $stmt10 = $this->adapter->conn->prepare("DELETE FROM ACHIEVEMENT_RECORD WHERE achievement_id = ?;");
+        $stmt11 = $this->adapter->conn->prepare("DELETE FROM MAIL WHERE achievement_id = ?;");
+        $stmt12 = $this->adapter->conn->prepare("DELETE FROM ACHIEVEMENT WHERE id = ?;");
+        $this->adapter->conn->beginTransaction();
         
-        $stmt = $this->adapter->conn->prepare(
-            "DELETE FROM ACHIEVEMENT WHERE ".
-            "id = ?;");
-        $stmt->bindParam(1,$p_achievementSet_id);
+        $stmt1->bindParam(1,$p_achievement_id);
+        $stmt2->bindParam(1,$p_achievement_id);
+        $stmt3->bindParam(1,$p_achievement_id);
+        $stmt10->bindParam(1,$p_achievement_id);
+        $stmt11->bindParam(1,$p_achievement_id);
+        $stmt12->bindParam(1,$p_achievement_id);
+
         try{
-            $result = $this->adapter->executeUpdatePrepared($stmt);
+            $result = $this->adapter->executeFetchPrepared($stmt1);
+            if (isset($result[0])){
+            	$next = $result[0]['next'];
+            }else{
+            	throw new Exception('Achievement Does Not Exist');
+            }
+            
+            $result = $this->adapter->executeFetchPrepared($stmt2);
+            if (isset($result[0])){
+            	$position = $result[0]['position'];
+            }else{
+            	throw new Exception('Achievement Does Not Exist');
+            }
+    
+            $result = $this->adapter->executeFetchPrepared($stmt3);
+            if (isset($result[0])){
+            	$set_id = $result[0]['set_id'];
+            }else{
+            	throw new Exception('Achievement Does Not Exist');
+            }
+            
+            $stmt4->bindParam(1,$next);
+        	$stmt4->bindParam(2,$p_achievement_id);
+            $result = $this->adapter->executeUpdatePrepared($stmt4);
+
+            $stmt5->bindParam(1,$set_id);
+        	$stmt5->bindParam(2,$position);
+            $result = $this->adapter->executeUpdatePrepared($stmt5);
+
+            $stmt6->bindParam(1,$set_id);
+            $result = $this->adapter->executeUpdatePrepared($stmt6);
+
+            $stmt7->bindParam(1,$next);
+            $stmt7->bindParam(2,$p_achievement_id);
+            $result = $this->adapter->executeUpdatePrepared($stmt7);
+
+            $stmt8->bindParam(1,$set_id);
+        	$stmt8->bindParam(2,$position);
+            $result = $this->adapter->executeUpdatePrepared($stmt8);
+
+            $stmt9->bindParam(1,$set_id);
+            $result = $this->adapter->executeUpdatePrepared($stmt9);
+
+            $result = $this->adapter->executeUpdatePrepared($stmt10);
+            $result = $this->adapter->executeUpdatePrepared($stmt11);
+            $result = $this->adapter->executeUpdatePrepared($stmt12);
+            $success = $this->adapter->conn->commit();
         }catch(PDOException $e){
+            $this->adapter->conn->rollBack();
             return false;
+        }catch(ErrorException $e){
+            $this->adapter->conn->rollBack();
+        	return false;
+        }catch(Exception $e){
+            $this->adapter->conn->rollBack();
+        	return false;
         }
-        if($result > 0){
+        if($success){
             return true;
         }
         return false;
@@ -1842,6 +2256,20 @@ class PDOHelper{
         }
         return false;
     }
+
+
+    public function editAchievementPicPath($p_achievement_id, $p_achievement_src) {
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE ACHIEVEMENT SET PIC_PATH=? ".
+            "WHERE ID=?");
+        $stmt->bindParam(1, $p_achievement_src);
+        $stmt->bindParam(2, $p_achievement_id);
+        try {
+            return $this->adapter->executeUpdatePrepared($stmt) > 0;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
     
     /**
      * Update an achievement SetId
@@ -1865,6 +2293,78 @@ class PDOHelper{
             return true;
         }
         return false;
+    }
+
+
+    /**
+     * Replace the species associated with the achievement set identified by
+     * the given id with the list of species passed.
+     * @param String $p_set_id The id of the achievement set whose species
+     * are to be edited.
+     * @param Array $p_species_list Array of associative array each of which
+     * has a key 'id' whose value is the id of a species.
+     * NOTE: incumbent upon caller to remove duplicate ids from the species
+     * list.  Will faill if duplicates exist.
+     */
+    public function replaceSpeciesListForSet($p_set_id, $p_species_list) {
+
+        // Insertion statement
+        $stmt = "INSERT INTO SPECIES_ACHIEVEMENT_SET VALUES ";
+
+        // Get statement, used for comparason with deletion statement
+        $getStmt = $this->adapter->conn->prepare(
+            "SELECT species_id FROM SPECIES_ACHIEVEMENT_SET WHERE set_id = ?");
+
+        // Deletion statement
+        $deleteStmt = $this->adapter->conn->prepare(
+            "DELETE FROM SPECIES_ACHIEVEMENT_SET WHERE set_id = ?");
+
+        // Begin transaction
+        $this->adapter->conn->beginTransaction();
+
+        $getStmt->bindParam(1, $p_set_id);
+        $deleteStmt->bindParam(1, $p_set_id);
+
+        try {
+            // Fun fact: if both queries below fail, we won't have any idea
+            // unless a row which failed to be deleted has a species_id equal
+            // to one we are trying to insert.
+            $getResult = $this->adapter->executeUpdatePrepared($getStmt);
+            $deleteResult = $this->adapter->executeUpdatePrepared($deleteStmt);
+
+            if ($getResult != $deleteResult) {
+                throw new PDOException("Deletion failed.");
+            }
+
+            for ($i = 0; $i < sizeof($p_species_list); $i++) {
+                $speciesId = $p_species_list[$i]['id'];
+                $stmt = $stmt . "('" . $speciesId . "', '" . $p_set_id . "')";
+
+                if ($i == sizeof($p_species_list) - 1) {
+                    $stmt = $stmt . ";";
+                } else {
+                    $stmt = $stmt . ", ";
+                }
+            }
+
+            // Attempt update
+            $stmtObj = $this->adapter->conn->prepare($stmt);
+            $result = $this->adapter->executeUpdatePrepared($stmtObj);
+
+            // If number of rows inserted 
+            if ($result != sizeof($p_species_list)) {
+                throw new PDOException("Insertion failed.");
+            }
+        } catch (PDOException $e) {
+            return false;
+        } catch(ErrorException $e) {
+            return false;
+        } catch(Exception $e) {
+            return false;
+        }        
+
+        if ($this->adapter->conn->commit()) return true;
+        else return false;
     }
 
     /** 
@@ -1909,7 +2409,6 @@ class PDOHelper{
      * @param String $p_pet_id Pet ID
      * @param String $p_achievement_id Achievement ID
      * @param String $p_clinic_id Clinic ID
-     * @param String $p_points Multiplier
      * @return boolean $result Returns true if successful, false otherwise 
      */
     public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){
@@ -1942,7 +2441,7 @@ class PDOHelper{
         try{
 
             $result = $this->adapter->executeUpdatePrepared($stmt);
-
+            
         }catch(PDOException $e){
             return false;
         }
@@ -1955,34 +2454,78 @@ class PDOHelper{
     
 
     /**
-     * Delete an achievement record based on pet ID and set ID
+     * Delete an achievement record based on pet ID and set ID and take points off
      * @param String $p_pet_id Pet ID
      * @param String $p_set_id Set ID
      * @return Boolean Returns true if it is deleted successfully,else false
      */
-    public function deleteAchievementRecord($p_pet_id,$p_achievement_id){
 
-        $stmt = $this->adapter->conn->prepare(
-            "DELETE FROM ACHIEVEMENT_RECORD ".
-            "WHERE (achievement_id = ? OR next = ?) AND pet_id = ? ;"
+    /*Update the points for the pet*/
+    public function deleteAchievementRecord($p_pet_id,$p_set_id){
+        
+        $stmt1 = $this->adapter->conn->prepare(
+            "UPDATE PET SET points = ( points - (SELECT points FROM ACHIEVEMENT_RECORD WHERE ".
+			"pet_id = ? ".
+			"AND set_id = ? ".
+            "AND position = (SELECT MAX(position) FROM ACHIEVEMENT_RECORD WHERE pet_id = ? AND set_id = ? )))".
+            "WHERE pet_id = ?;");
+        
+        /*Update the net points for the pet owner*/
+        $stmt2 = $this->adapter->conn->prepare(
+            "UPDATE OWNER SET net_points = (net_points - (SELECT points FROM ACHIEVEMENT_RECORD WHERE ".
+			"pet_id = ? ".
+			"AND set_id = ? ".
+            "AND position = (SELECT MAX(position) FROM ACHIEVEMENT_RECORD WHERE pet_id = ? AND set_id = ? )))".
+            "WHERE email = (SELECT owner_id FROM PET WHERE pet_id = ? );"
         );
 
-        $stmt->bindParam(1,$p_achievement_id);
-        $stmt->bindParam(2,$p_achievement_id);
-        $stmt->bindParam(3,$p_pet_id);
+        
+        /*Delete the record with highest postion for set for pet*/
+        $stmt3 = $this->adapter->conn->prepare(
+            "DELETE FROM ACHIEVEMENT_RECORD WHERE pet_id = ? ".
+            "AND set_id = ? ".
+            "AND position = ".
+            "(SELECT pos FROM (SELECT MAX(position) AS pos FROM ACHIEVEMENT_RECORD WHERE pet_id = ? AND set_id = ? ) AS TEMP);"
+        );
 
         try{
+            $this->adapter->conn->beginTransaction();
 
-            $result = $this->adapter->executeUpdatePrepared($stmt);
+            $stmt1->bindParam(1,$p_pet_id);
+            $stmt1->bindParam(2,$p_set_id);
+            $stmt1->bindParam(3,$p_pet_id);
+            $stmt1->bindParam(4,$p_set_id);
+            $stmt1->bindParam(5,$p_pet_id);
+            
+            $result = $this->adapter->executeUpdatePrepared($stmt1);
 
+            $stmt2->bindParam(1,$p_pet_id);
+            $stmt2->bindParam(2,$p_set_id);
+            $stmt2->bindParam(3,$p_pet_id);
+            $stmt2->bindParam(4,$p_set_id);
+            $stmt2->bindParam(5,$p_pet_id);
+
+            $result = $this->adapter->executeUpdatePrepared($stmt2);
+            
+            $stmt3->bindParam(1,$p_pet_id);
+            $stmt3->bindParam(2,$p_set_id);
+            $stmt3->bindParam(3,$p_pet_id);
+            $stmt3->bindParam(4,$p_set_id);
+
+            $result = $this->adapter->executeUpdatePrepared($stmt3);
+
+            $success = $this->adapter->conn->commit();
+            
         }catch(PDOException $e){
+            $this->adapter->conn->rollBack();
             return false;
 
         }catch(ErrorException $e) {
+            $this->adapter->conn->rollBack();
             return false;
         }
 
-        if($result > 0) {
+        if($success) {
             return true;
         }
         return false;
@@ -2047,16 +2590,14 @@ class PDOHelper{
     }
 
     /**
-     * Update the total points for a specific cat
+     * Update the total points for a specific pet
      * @param String $p_achievement_id Achievement ID
      * @param String $p_pet_id Pet ID
      * @return Boolean Returns true if the operation is successful, else false
      */
     public function updatePetPoints($p_achievement_id, $p_pet_id){
-        var_dump($p_achievement_id);
-        var_dump($p_pet_id);
         $stmt = $this->adapter->conn->prepare(
-            "UPDATE PET SET net_points = (net_points + (SELECT points FROM ACHIEVEMENT_RECORD WHERE achievement_id = ? AND pet_id = ?)) WHERE pet_id = ?".
+            "UPDATE PET SET points = (points + (SELECT points FROM ACHIEVEMENT_RECORD WHERE achievement_id = ? AND pet_id = ?)) WHERE pet_id = ?".
             ";");
         $stmt->bindParam(1,$p_achievement_id);
         $stmt->bindParam(2,$p_pet_id);
@@ -2067,12 +2608,28 @@ class PDOHelper{
             return false;
         }
 
-        if($result > 0) {
-            return true;
+        return $result > 0;
+    }
 
+    /**
+     * Update the net points for a specific owner 
+     * @param String $p_owner_id Owner ID
+     * @return String Boolean Returns true if the operation is successful, else false
+     */ 
+    public function updateOwnerNetPoints($p_achievement_id,$p_pet_id){
+        $stmt = $this->adapter->conn->prepare(
+            "UPDATE OWNER SET net_points = (net_points + (SELECT points FROM ACHIEVEMENT_RECORD WHERE achievement_id = ? AND pet_id = ?)) ".
+            "WHERE email = (SELECT owner_id FROM PET WHERE pet_id = ?);");
+        $stmt->bindParam(1,$p_achievement_id);
+        $stmt->bindParam(2,$p_pet_id);
+        $stmt->bindParam(3,$p_pet_id);
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
         }
-        return false;
 
+        return $result > 0;
     }
 
     /**
@@ -2082,39 +2639,44 @@ class PDOHelper{
      * @param String $p_pet_id Pet Id
      * @return Array Returns array of achievement record array, .
      */
-    public function getLatestAchievementRecordForPet($p_pet_id){
+    public function getLatestAchievementRecordsForPet($p_pet_id){
         $stmt = $this->adapter->conn->prepare(
-            "SELECT re.id,re.name,re.description,re.pet_id,re.clinic_id,".
-            "re.total,re.position,re.dates,re.points,re.next,new.set_id,new.set_description,new.set_name ".
-            "FROM (SELECT AR.achievement_id AS id, ".
-            "A.name, ".
-            "A.description, ".
-            "AR.pet_id, ".
-            "AR.clinic_id, ".
-            "AR.total, ".
-            "AR.position AS position, ".
-            "AR.dates, ".
-            "AR.points, ".
-            "AR.next, ".
-            "AR.set_id ".
-            "FROM ACHIEVEMENT A, ".
-            "ACHIEVEMENT_SET S,".
-            "ACHIEVEMENT_RECORD AR ".
-            "WHERE AR.pet_id = ? AND AR.achievement_id = A.id ORDER BY AR.position DESC LIMIT 1) AS re ".
-            "RIGHT JOIN ".
-            "(SELECT SAS.set_id, ".
-            "S.description AS set_description, ".
-            "S.name AS set_name ".
-            "FROM PET P, SPECIES SP,SPECIES_ACHIEVEMENT_SET SAS,ACHIEVEMENT_SET S ".
-            "WHERE P.pet_id = ? AND P.species = SP.name AND SP.id = SAS.species_id AND SAS.set_id = S.id) AS new ".
-            "ON re.set_id = new.set_id ;");
-
+            "SELECT RECORDS.*,".
+       		"A2.total AS next_total,".
+            "A2.points AS next_points,".
+            "A2.pic_path AS next_pic_path,".
+            "A2.position AS next_position,".
+            "A2.name AS next_name,".
+            "A2.description AS next_description,".
+            "S.name AS set_name,".
+            "S.description AS set_description,PO.current_points,PO.total_set_points FROM ".
+            "(SELECT sum(IFNULL(AR.points,0)) AS current_points,".
+            "sum(A.points) AS total_set_points,".
+            "A.set_id AS p_set_id FROM ".
+            "(SELECT set_id FROM PET P JOIN SPECIES_ACHIEVEMENT_SET SA ON P.species_id = SA.species_id WHERE P.pet_id = ? ) AS SETS ".
+            "JOIN ACHIEVEMENT A ON SETS.set_id = A.set_id LEFT JOIN ACHIEVEMENT_RECORD AR ON A.id = AR.achievement_id GROUP BY A.set_id ) AS PO ".
+            "JOIN ".
+            "(SELECT P.pet_id, SAS.set_id ".
+            "FROM PET P ".
+            "JOIN SPECIES SP ON P.species_id = SP.id ".
+            "JOIN SPECIES_ACHIEVEMENT_SET SAS ON SP.id = SAS.species_id ". 
+            "WHERE P.pet_id = ? ) SETS ".
+            "ON PO.p_set_id = SETS.set_id ".
+            "JOIN ACHIEVEMENT_SET S ON S.id = SETS.set_id ".
+            "LEFT JOIN (SELECT A.*, AR.pet_id, AR.clinic_id, AR.points AS record_points, AR.dates ".
+            "FROM (SELECT * FROM ACHIEVEMENT_RECORD WHERE pet_id = ?) AR ".
+            "RIGHT JOIN ACHIEVEMENT A ON AR.achievement_id = A.id ".
+            "WHERE A.position = (SELECT IFNULL(MAX(position),1) FROM ACHIEVEMENT_RECORD WHERE set_id = A.set_id AND pet_id = ? )".
+            ") RECORDS ON RECORDS.set_id = SETS.set_id LEFT JOIN ACHIEVEMENT A2 ON RECORDS.next = A2.id;");
+        
         $stmt->bindParam(1,$p_pet_id);
         $stmt->bindParam(2,$p_pet_id);
+        $stmt->bindParam(3,$p_pet_id);
+        $stmt->bindParam(4,$p_pet_id);
 
         try{
             $result = $this->adapter->executeFetchPrepared($stmt);
-        }catch(PDOException $e){
+     	}catch(PDOException $e){
             return null;
         }
 
@@ -2139,6 +2701,7 @@ class PDOHelper{
             "AR.clinic_id,".
             "AR.points,".
             "A.name,".
+            "A.pic_path,".
             "A.description,".
             "AR.next,".
             "A.position,".
@@ -2167,6 +2730,40 @@ class PDOHelper{
             return $result[0];
         }
         return null;
+    }
+
+    /**************************************************************************
+    *
+    *    Species Set Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Adding a new species to a set
+     * @param String $p_species_id The species id
+     * @param String $p_set_id The set id to be added to
+     * @return Boolean Returns True is successfull false otherwise
+     */
+    public function addSpeciesToSet($p_species_id, $p_set_id){
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO SPECIES_ACHIEVEMENT_SET(species_id,set_id) ".
+            "VALUES(".
+            "?,".
+            "?);");
+            $stmt->bindParam(1,$p_species_id);
+            $stmt->bindParam(2,$p_set_id);
+            
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return false;
+        }
+        
+        if($result > 0) {
+            return true;
+        }else{
+            return false;    
+        }
     }
 
     /**************************************************************************
@@ -2202,6 +2799,27 @@ class PDOHelper{
             "FROM SPECIES ".
             "WHERE id=?;");
             $stmt->bindParam(1,$p_species_id);
+
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result[0];
+    }
+
+    /**
+     * Get a specific species ID from name
+     * @param String $p_species_name The specific species name
+     * @return Array $result Returns species ID
+     */
+    public function getSpeciesId($p_species_name){
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT id ".
+            "FROM SPECIES ".
+            "WHERE name=?;");
+            $stmt->bindParam(1,$p_species_name);
 
         try{
             $result = $this->adapter->executeFetchPrepared($stmt);
@@ -2264,6 +2882,105 @@ class PDOHelper{
         }
         return false;
     }
+
+    /**************************************************************************
+    *
+    *    Notification Methods
+    *
+    /**************************************************************************/
+
+    /**
+     * Removes specific notifications
+     * @param String $p_ownerId The Owner ID
+     * @param String $p_pet_id The pet ID
+     * @param String $p_achievement_id The achievement ID
+     * @return Boolean $result Returns true if removed successfully,else false
+     */
+    public function removeNotification($p_ownerId,$p_pet_id,$p_achievement_id){
+        $stmt = $this->adapter->conn->prepare("DELETE FROM MAIL ".
+            "WHERE owner_id=? ".
+            "AND pet_id=? ".
+            "AND achievement_id=?;");
+        
+        $stmt->bindParam(1,$p_ownerId);
+        $stmt->bindParam(2,$p_pet_id);
+        $stmt->bindParam(3,$p_achievement_id);
+        try{
+
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+
+        }catch(PDOException $e){
+            return false;
+
+        }catch(ErrorException $e) {
+            return false;
+        }
+
+        if($result > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get all notifications
+     * @return Array $result Returns array of all notifications
+     */
+    public function getAllNotifications(){
+        
+        $stmt = $this->adapter->conn->prepare(
+            "SELECT m.owner_id, p.name AS pet_name, a.name AS achievement_name, m.dates, c.name AS clinic_name, p.pet_id, a.id AS achievement_id ".
+            "FROM MAIL m, ACHIEVEMENT a, PET p LEFT JOIN CLINIC c ".
+            "ON c.clinic_id = p.clinic_id ".
+            "WHERE m.pet_id = p.pet_id AND a.id = m.achievement_id;");
+        try{
+            $result = $this->adapter->executeFetchPrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Adding a new pet into the notification list
+     * @param String $p_ownerId The Pet's Owner ID
+     * @param String $p_pet_id The Pet's ID
+     * @param String $p_birthday The Pet's DOB
+     * @param String $p_achievement_id The achievement's ID
+     * @return Boolean $result Returns true if inserted successfully, else false
+     */
+    public function addToMail($p_ownerId,$p_pet_id,$p_birthday,$p_achievement_id){   
+        //Changing $p_birthday from DateTime object into string
+        $bday = $p_birthday->format('Y-m-d');
+
+        $stmt = $this->adapter->conn->prepare(
+            "INSERT INTO MAIL(owner_id,pet_id,dates,achievement_id) ".
+            "VALUES(".
+            "?,".
+            "?,".
+            "?,".
+            "?);");
+            $stmt->bindParam(1,$p_ownerId);
+            $stmt->bindParam(2,$p_pet_id);
+            $stmt->bindParam(3,$bday);
+            $stmt->bindParam(4,$p_achievement_id);
+            
+        try{
+            $result = $this->adapter->executeUpdatePrepared($stmt);
+        }catch(PDOException $e){
+            return null;
+        }
+        
+        if($result > 0) {
+            return true;
+        }else{
+            return false;    
+        }    
+    }
+
+
+
 }
 ?>
 

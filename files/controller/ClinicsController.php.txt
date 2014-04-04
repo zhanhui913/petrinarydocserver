@@ -4,6 +4,7 @@ $root = $_SERVER['DOCUMENT_ROOT'];
 require_once $root . '/../libs/Slim/Slim.php';
 require_once $root . '/../sys/controller/RouteController.php';
 require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
 
 /**
  * Controller for the /Clinics route.
@@ -39,7 +40,7 @@ class ClinicsController implements RouteController{
 		$clinic['password'] = $password;
 		$clinic['salt'] = $salt;
 
-                $clinic['expiration'] = null;
+        $clinic['expiration'] = null;
 		$ret = $this->mc->createClinic($clinic);
 
 		echo json_encode(array('id' => $ret));
@@ -53,8 +54,8 @@ class ClinicsController implements RouteController{
 		// TODO: ensure that action is authorized.
 
 		if ((isset($clinic['password'])) && 
-				($clinic['password'] != "") 								&& 
-				($clinic['password'] != null)) 							{
+				($clinic['password'] != "") && 
+				($clinic['password'] != null)) {
 
 			$salt = time() . $clinic['name'];
 
@@ -62,9 +63,14 @@ class ClinicsController implements RouteController{
 
 			$clinic['password'] = $password;
 			$clinic['salt'] = $salt;
+			
+			// Update the session if it is the clinic who is doing the update
+			if (isset($clinic['passwordReset']) && $clinic['passwordReset'] == true) {
+				set_session_variables($clinic['email'], $password, ROLE_CLINIC, $clinic['email']);
+			}
 		}
 
-                $clinic['expiraton'] = null;
+        $clinic['expiraton'] = null;
 		echo json_encode($this->mc->updateClinic($clinic));
 
 	}

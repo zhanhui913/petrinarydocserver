@@ -1,0 +1,71 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../libs/Slim/Slim.php';
+require_once $root . '/../sys/utils/login_utils.php';
+
+/**
+ * Controls actions related to the /achievementRecord
+ */
+class AchievementRecordController implements RouteController {
+
+  private $mc;
+  private $app;
+
+  public function __construct() {
+    $this->mc = new ModelController();
+    $this->app = Slim\Slim::getInstance();
+  }
+
+
+  public function index(&$args) {
+  }
+
+  public function create(&$args) {
+
+  	// Authorize action
+  	authorize($this->app);
+  	
+    $id = $args['nextId'];
+    $ret = $this->mc->addAchievementRecord($args['pet'], $id, null);
+    return;
+  }
+
+  public function show(&$args) {
+
+	// Authorize action
+  	authorize($this->app);
+  	
+  	$petId = $args['petId'];
+  	$returnType = $_SERVER['HTTP_ACCEPT'];
+  	
+  	$ret = $this->mc->getLatestAchievementRecordsForPet($petId);
+  	
+  	if ($returnType == 'text/json') {
+  		if ($ret != null) {
+  			echo json_encode($ret);
+  		}
+  	}
+  	return;
+  }
+
+  public function update(&$args) {
+
+  }
+  public function destroy(&$args) {
+
+  	// Authorize action
+  	authorize($this->app);
+  	
+    $setId = $args['setId'];
+    $petId = $args['petId'];
+
+    $ret = $this->mc->deleteAchievementRecord($petId, $setId);
+    echo json_encode(array('wasSuccessful' => $ret));
+  }
+
+}
+
+?>

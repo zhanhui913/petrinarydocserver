@@ -3,11 +3,14 @@
 $root = $_SERVER['DOCUMENT_ROOT'];
 require_once $root . '/../sys/controller/RouteController.php';
 require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/controller/PDO_Adapter.php';
 require_once $root . '/../sys/utils/login_utils.php';
 require_once $root . '/../libs/Slim/Slim.php';
 
 /**
- * Controller for the /picture route.
+ * Controller for the /owner/:ownerId/pet/:petId/picture route.
+ * Used to perform the canonical operations on resources that are pictures
+ * for a pet's profile.
  */
 class PictureController implements RouteController {
 
@@ -20,26 +23,51 @@ class PictureController implements RouteController {
 		$this->mc = new ModelController();
 		$this->app = Slim\Slim::getInstance();
 		$this->ALLOWED_EXTENSIONS = array('gif', 'jpeg', 'jpg', 'png');
-		$this->MAX_FILE_SIZE = 10000000000000;
+		$this->MAX_FILE_SIZE = 2500000;
+	}
+
+	/**
+	 * Authorize the action 
+	 *
+	 */
+	private function authorizeAction($petId) {
+
+		authorize($this->app);
+
+		// Hack, straight to pdo_adapter
+		$adapter = new PDOAdapter();
+		$stmt = $adapter->conn->prepare("SELECT owner_id FROM PET WHERE pet_id=?;");
+		try {
+			$stmt->bindParam(1, $petId);
+			$result = $adapter->executeFetchPrepared($stmt)[0];
+			if ($result == null) $this->app->halt(404);
+			else {
+				if ($result['owner_id'] != $_SESSION['email']) {
+					$this->app->halt(403);
+				}
+			}
+		} catch (PDOException $e) {
+			$this->app->halt(500);
+		} catch (ErrorException $e) {
+			$this->app->halt(500);
+		}
 	}
 
 	public function index(&$args) {
-		$petId = $args['petId'];
-		$picId = $args['picId'];
 
-		// TODO: should proide JSON object full of picture objects.
 	}
 
 	public function create(&$args) {
 
-		//if (!isset($args['pet']) || !isset($args['files']) 	||
-		//	!isset($args['picture']['description'])) {
-		//	$this->app->halt(400);
-		//}
+		if (!isset($args['picture']['pet']) || !isset($args['files']) 	||
+			!isset($args['picture']['description'])) {
+			$this->app->halt(400);
+		}
+
+		$this->authorizeAction($args['picture']['pet']);
 
 		$petId = $args['picture']['pet'];
 		$files = $args['files'];
-
 		if ((
 			($files["file"]["type"] == "image/gif") 		||
 		 	($files["file"]["type"] == "image/jpeg")		||
@@ -77,9 +105,12 @@ class PictureController implements RouteController {
 						chmod($root . $picturesHome . $petIdHash, 0777);
 					}
 
+		      // Keep only last 10 characters of file name in case file name is too
+		      // long to be stored in the database.
+		      $name = substr($files['file']['name'], -10);
 					$timestamp = time();
 					$src = $picturesHome . $petIdHash . '/' . $timestamp . '_' .
-					  $files['file']['name'];
+					  $name;
 
 					move_uploaded_file($files["file"]["tmp_name"], 
 					  $root . $src);
@@ -94,7 +125,7 @@ class PictureController implements RouteController {
 						echo json_encode(
 							array(
 								'uploadSuccessful' => false,
-								'errorText' => 'File not successfully uploaded.'
+								'error' => 'File not successfully uploaded.'
 							)
 						);
 
@@ -114,7 +145,7 @@ class PictureController implements RouteController {
 					echo json_encode(
 						array(
 							'uploadSuccessful' => false,
-							'errorText' => $e->getMessage()
+							'error' => $e->getMessage()
 						)
 					);			
 				}
@@ -126,7 +157,7 @@ class PictureController implements RouteController {
 			echo json_encode(
 				array(
 					'uploadSuccessful' => false, 
-					'errorText' => 'Image not of correct type or file too large.'
+					'error' => 'Image not of correct type or file too large.'
 				)
 			);
 
@@ -134,10 +165,6 @@ class PictureController implements RouteController {
 	}
 
 	public function show(&$args) {
-		
-		$petId = $args['petId'];
-		$picId = $args['picId'];
-
 	}
 
 	public function update(&$args) {
@@ -147,10 +174,12 @@ class PictureController implements RouteController {
 			$this->app->halt(400);
 		}
 
+		$this->authorizeAction($args['petId']);		
+
 		if (isset($args['description'])) {
 			echo json_encode(
 				array(
-					'updateSuccessful' => $this->mc->
+					'wasSuccessful' => $this->mc->
 					  updatePictureDescription($args)
 				)
 			);
@@ -163,9 +192,13 @@ class PictureController implements RouteController {
 
 	public function destroy(&$args) {
 
+
 		if (!isset($args['petId']) || !isset($args['picId'])) {
 			$this->app->halt(400);
 		}
+
+		$this->authorizeAction($args['petId']);		
+
 
 		$petId = $args['petId'];
 		$picId = $args['picId'];

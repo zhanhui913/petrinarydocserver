@@ -121,13 +121,15 @@ class ModelController {
      /**
      * Get an owner object by either username or email
      * @param String $p_ownerId Provided username or email
+     * @param Integer $p_active 0 To retrieve all pets, 1 to retrieve only
+     * active pets.
      * @return Object Returns owner object if found, otherwise returns null
      */
-    public function getOwnerObject($p_ownerId){
+    public function getOwnerObject($p_ownerId, $p_active){
         $result = $this->helper->getOwnerById($p_ownerId);
         $owner = new Owner();
         if($result != null){
-            $petList = $this->getPetList($result['email']);
+            $petList = $this->getPetList($result['email'], $p_active);
             $owner->setInfo($result,$petList);
             return $owner;
         }else{
@@ -140,7 +142,6 @@ class ModelController {
     *    Vet Methods
     *
     /**************************************************************************/
-
 	/**
     * @deprecated
  	* Returns vet object if email is valid otherwise return null
@@ -193,6 +194,11 @@ class ModelController {
         if(count($result)==0) {
             return null;
         } else {
+            
+            $species = new Species();
+            $species->setName($result[0]['species_name']);
+            $species->setId($result[0]['species_id']);
+
  			//Getting the array of interest objects for this pet
             $interestArray = $this->getInterestRecord($p_pet_id);
          
@@ -205,17 +211,26 @@ class ModelController {
 	    $clinic = $this->getHomeClinic($p_pet_id);
 
             $pet = new Pet(); 
-		    $pet->setInfo($result[0],$pictureArray,$interestArray, $clinic, $achievements);
+		    $pet->setInfo($result[0],$pictureArray,$interestArray, $clinic, $achievements, $species);
             return $pet;
         }
     }
+
     /**
-     * Get an array of pet objects through owner email(owner_id)
+     * Get an array of pet objects through owner email(owner_id) based on active status bit
      * @param String $p_email Provided email
+     * @param String $p_active Provided active (1 or 0)
      * @return Object Returns array of pet objects if email is found, returns null otherwise
      */
-    public function getPetList($p_email){
-        $result = $this->helper->getAllPetId($p_email);
+    public function getPetList($p_email,$p_active){
+        //Only get active pets
+        if($p_active == 1){
+            $result = $this->helper->getAllActivePetId($p_email);
+        }
+        //Get all pets (active and inactive)
+        else{
+            $result = $this->helper->getAllPetId($p_email);
+        }
         $petList = array();
         if($result != null){
             for($i=0; $i < count($result); $i++) {
@@ -228,7 +243,7 @@ class ModelController {
         }
     }
     /**
-     * Add a pet to an owner
+     * Add a pet to an owner and adding the pet into the notification list
      * @param String $p_name Provided name
      * @param String $p_ownerId Provided ownerId (owner email)
      * @param String $p_birthday Provided birthday (YYYY-MM-DD)
@@ -244,7 +259,7 @@ class ModelController {
      * @return String|Boolean Return Pet's ID if successful, null otherwise
      **/
     public function addPet($p_name,$p_ownerId,$p_birthday,$p_sex,$p_age,
-        $p_colour,$p_breed,$p_species,$p_isNeutered,$p_netPoints,$p_homeClinic,$p_active){
+        $p_colour,$p_breed,$p_species_id,$p_isNeutered,$p_netPoints,$p_homeClinic,$p_active){
         $time = time();
 
         //Pet Id will be the only ID that uses php uniqId (13 characters)
@@ -265,13 +280,24 @@ class ModelController {
             'age'           =>  $p_age,
             'colour'        =>  $p_colour,
             'breed'         =>  $p_breed,
-            'species'       =>  $p_species,
+            'species_id'    =>  $p_species_id,
             'isNeutered'    =>  $p_isNeutered,
             'net_points'    =>  $p_netPoints,
             'clinic_id'     =>  $p_homeClinic,
             'active'        =>  $p_active );
 
         $result = $this->helper->addPet($petArray);
+
+        //Get the species ID for dog
+        $dogId = $this->helper->getSpeciesId('Dog');
+
+        //Get the species ID for cat
+        $catId = $this->helper->getSpeciesId('Cat');
+
+        //Creating the notification list for this new pet if it is a dog or cat
+        if($p_species_id==$dogId[0] || $p_species_id==$catId[0]){
+            $this->addToMail($ownerId,$p_petId,$p_birthday);
+        }
         return $result;
     }
 
@@ -392,7 +418,9 @@ class ModelController {
 				if ($interest->getCategory() != null) {
 					$category = $this->getCategory($interest->getCategory()
 					  ->getCategoryId());
-				}
+				} else {
+                    $category = null;
+                }
 			    $interestRecord->setInfo($result[$i],$interest,$category);
 			    array_push($array,$interestRecord);
             }
@@ -854,6 +882,21 @@ class ModelController {
         if($result!= null){
             $achievementSet = new AchievementSet();
             $achievementSet->setInfo($result);
+
+            // Query for the species which are eligible for this achievement.
+            $species = $this->helper->getSpeciesForAchievementSet(
+                $achievementSet->getId()
+            );
+
+            $speciesList = array();
+            for ($j = 0; $j < sizeof($species); $j++) {
+                $s = new Species();
+                $s->setInfo($species[$j]);
+                $speciesList[] = $s;
+            }
+
+            $achievementSet->setSpecies($speciesList);
+
             return $achievementSet;
         }else{
             return null;
@@ -870,11 +913,25 @@ class ModelController {
         for($i=0;$i<sizeof($resultAchievementSet);$i++){
             $set = new AchievementSet();
             $set->setInfo($resultAchievementSet[$i]);
+
+            // Query for the species eligible for this achievement.
+            $species = $this->helper->getSpeciesForAchievementSet(
+                $set->getId()
+            );
+
+            $speciesList = array();
+            for ($j = 0; $j < sizeof($species); $j++) {
+                $s = new Species();
+                $s->setInfo($species[$j]);
+                $speciesList[] = $s;
+            }
+
+            $set->setSpecies($speciesList);
+
             array_push($array, $set);
         }
         return $array;
     }
-
 
     /**
      * Adds an achievementSet into the db
@@ -919,11 +976,26 @@ class ModelController {
         return $result;
     }
 
+    /**
+     * Edits an achievementSet name from the database
+     * @param  String $p_achievement_id Provided achievement id to be moved
+     * @param  String $p_achievement_position New position for achievement
+     * @return Boolean Returns true if updated successfully, false otherwise
+     */
+    public function reorderAchievementSet($p_achievement_id,$p_achievement_position){
+        $result = $this->helper->reorderAchievementSet($p_achievement_id,$p_achievement_position);
+        return $result;
+    }
+
     /**************************************************************************
     *
     *    Achievement Methods
     *
     /**************************************************************************/
+    
+    public function addAchievementToSet($p_achievement_id,$p_set_id){
+        return $this->helper->addAchievementToSet($p_achievement_id,$p_set_id);
+    }
 
     public function getFirstAchievementForSet($p_pet_id){
 
@@ -935,7 +1007,6 @@ class ModelController {
         }else{
             return null;
         }
-        
     }
 
     /**
@@ -955,7 +1026,7 @@ class ModelController {
     }
 
     /**
-    * Get all achievement for a particular AchievementSet
+    * Get all achievements
     * @return Array Returns an array of achievement objects
     */
     public function getAllAchievements(){
@@ -1000,11 +1071,11 @@ class ModelController {
      * @param String $p_achievement_setId The achievement's achievementSet's ID
      * @return String|Boolean Returns AchievementSet ID if inserted successfully, null otherwise
      */
-    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
-        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId){
+    public function addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_description,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId,$p_pic_path){
 
-        $result = $this->helper->addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_desciprtion,
-        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId);
+        $result = $this->helper->addAchievement($p_achievement_points,$p_achievement_name,$p_achievement_description,
+        $p_achievement_next,$p_achievement_total,$p_achievement_position,$p_achievement_setId,$p_pic_path);
         return $result;
     }
 
@@ -1085,6 +1156,15 @@ class ModelController {
     }
 
     /**
+     * Edits an achievement pic_path in the database.
+     * @param String $p_achievement_id The id of the achievement 
+     */
+    public function editAchievementPicPath($p_achievement_id, $p_achievement_src) {
+        return $this->helper->editAchievementPicPath($p_achievement_id,
+            $p_achievement_src);
+    }
+
+    /**
      * Edits an achievement set ID from the database
      * @param  String $p_achievement_id Provided achievement ID
      * @param  String $p_achievement_setId Provided new achievement setID
@@ -1104,29 +1184,70 @@ class ModelController {
 
     /**
      * Get latest achievement record for a pet
-     * @param  String $p_achievement_id Provided Achievement's ID
      * @param  String $p_pet_id Provided Pet's ID
-     * @return Object|Boolean Achievement Record Object if successful, else returns null
+     * @return Array Array of Achievement Record Objects if successful, else returns null
      */
-
     public function getLatestAchievementRecordsForPet($p_pet_id){
 
         $resultArray = array();
 
-        $array = $this->helper->getLatestAchievementRecordForPet($p_pet_id);
+        $array = $this->helper->getLatestAchievementRecordsForPet($p_pet_id);
         if ($array != null){
             for( $i=0 ; $i<sizeof($array) ; $i++){
-                $currentAchievement = new Achievement();
-                $achievementRecord = new AchievementRecord();
-                if($array[$i]['id'] == null){
-                    $nextAchievement = $this->getFirstAchievementForSet($array[$i]['set_id']);
-                }else{
-                    $currentAchievement->setInfo($array[$i]);
-                    $nextAchievement = $this->getAchievement($array[$i]['next']);
-                }
+                if($array[$i]['id'] != null){
 
-                $achievementRecord->setInfo($array[$i],$currentAchievement,$nextAchievement);
-                array_push($resultArray,$achievementRecord);
+                    $currentAchievement = new Achievement();
+                    $nextAchievement = new Achievement();
+                    $achievementRecord = new AchievementRecord();
+
+                    $currentAchievementInfoArray = array(
+                        'id'                => $array[$i]['id'],
+                        'points'            => $array[$i]['points'],
+                        'description'       => $array[$i]['description'],
+                        'name'              => $array[$i]['name'],
+                        'next'              => $array[$i]['next'],
+                        'position'          => $array[$i]['position'],
+                        'total'             => $array[$i]['total'],
+                        'set_id'            => $array[$i]['set_id'],
+                        'set_name'          => $array[$i]['set_name'],
+                        'set_description'   => $array[$i]['set_description'],
+                        'pic_path'          => $array[$i]['pic_path']
+                    );
+
+                    $nextAchievemetInfoArray = array(
+                        'id'                => $array[$i]['next'],
+                        'points'            => $array[$i]['next_points'],
+                        'description'       => $array[$i]['next_description'],
+                        'name'              => $array[$i]['next_name'],
+                        'next'              => null,
+                        'position'          => $array[$i]['next_position'],
+                        'total'             => $array[$i]['next_total'],
+                        'set_id'            => $array[$i]['set_id'],
+                        'set_name'          => $array[$i]['set_name'],
+                        'set_description'   => $array[$i]['set_description'],
+                        'pic_path'          => $array[$i]['next_pic_path']
+                    );
+                                    
+                    
+                    if($array[$i]['pet_id'] == null){
+
+                        $currentAchievement = null;
+                        $nextAchievement->setInfo($currentAchievementInfoArray);
+
+                    }else{
+
+                        $currentAchievement->setInfo($currentAchievementInfoArray);
+
+                        if($array[$i]['next'] == null){  
+                            $nextAchievement = null;
+                        }else{
+                            $nextAchievement->setInfo($nextAchievemetInfoArray);
+                        }
+                    }
+
+                    $achievementRecord->setInfo($array[$i],$currentAchievement,$nextAchievement);
+                    array_push($resultArray,$achievementRecord);
+                }
             } 
         }else{
             return null;
@@ -1134,6 +1255,12 @@ class ModelController {
         return $resultArray;
     } 
 
+    /**
+     * Get an achievement record by pet ID and achievement ID
+     * @param String $p_pet_id Pet ID.
+     * @param String $p_achievement_id Achievement ID.
+     * @return Array Returns array of achievement record attributes if successful,else null.
+     */
     public function getAchievementRecord($p_pet_id,$p_achievement_id){
 
         $result = $this->helper->getAchievementRecord($p_pet_id,$p_achievement_id);
@@ -1149,15 +1276,16 @@ class ModelController {
          
         return null;
     }
+
     /**
-     * Add achievement record information
-     * @param String $p_set_id Provided Set ID
-     * @param String $p_pet_id Provided Pet ID
-     * @return Boolean Returns True if added successfully, else false          
+     * Add a new achievement record for a pet
+     * @param String $p_pet_id Pet ID
+     * @param String $p_achievement_id Achievement ID
+     * @param String $p_clinic_id Clinic ID
+     * @return boolean $result Returns true if successful, false otherwise 
      */
     public function addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id){
         $result = $this->helper->addAchievementRecord($p_pet_id,$p_achievement_id, $p_clinic_id);
-
         if($result == true){
 
             $status = $this->helper->updatePetPoints($p_achievement_id,$p_pet_id);
@@ -1165,17 +1293,56 @@ class ModelController {
                 return null;
             }
 
+            $status = $this->helper->updateOwnerNetPoints($p_achievement_id,$p_pet_id);
+            if($status == false){
+                return null;
+            }
             return $this->getAchievementRecord($p_pet_id,$p_achievement_id);
 
         }
         return null;
     }
 
-    public function deleteAchievementRecord($p_pet_id,$p_achievement_id){
+    /**
+     * Delete an achievement record based on pet ID and set ID
+     * @param String $p_pet_id Pet ID
+     * @param String $p_set_id Set ID
+     * @return Boolean Returns true if it is deleted successfully,else false
+     */
+    public function deleteAchievementRecord($p_pet_id,$p_set_id){
 
-        return $this->helper->deleteAchievementRecord($p_pet_id,$p_achievement_id);
+        return $this->helper->deleteAchievementRecord($p_pet_id,$p_set_id);
     }
 
+    /**************************************************************************
+    *
+    *    Species Set Methods
+    *
+    /**************************************************************************/
+
+     /**
+     * Add a species to a specific set
+     * @param String $p_species_id The id of the species to add to the set
+     * @param String $p_set_id The id of the set to be added to
+     * @return Boolean True is successfull, false is failed
+     */
+    public function addSpeciesToSet($p_species_id, $p_set_id){
+        $result = $this->helper->addSpeciesToSet($p_species_id, $p_set_id);
+        return $result;
+    }
+
+    /**
+     * Reset 
+     * @param String $p_set_id The id of the achievement set whose species
+     * list to be replaced.
+     * @param Array $p_species_list Array of associative arrays, with each
+     * associative array having key 'id' which specifies the id of the species
+     * to be associated with the given id of the achievement set.
+     *
+     */
+    public function replaceSpeciesListForSet($p_set_id, $p_species_list) {
+        return $this->helper->replaceSpeciesListForSet($p_set_id, $p_species_list);
+    }
 
     /**************************************************************************
     *
@@ -1236,6 +1403,294 @@ class ModelController {
         $result = $this->helper->editSpeciesName($p_species_id,$p_species_name);
         return $result;
     }
+
+    /**************************************************************************
+    *
+    *    Notification Methods
+    *
+    /**************************************************************************/
+
+
+    /**
+     * Gets all notification that that are due a week ago, today and a week from now
+     * @return Array Returns an array with all the information
+     */
+    public function dailyCheck(){
+        //Today's date
+        $today = date('Y-m-d');
+
+        //Converting date string into DateTime object format
+        $today = new DateTime($today);
+
+        
+        //Get all the notifications
+        $result = $this->helper->getAllNotifications();
+
+
+        //Keep track of which notificiations are schedule
+        $array = array();
+
+        //Put notifications blow -7 days into this array to be removed
+        $old = array();
+
+        for($i=0;$i<sizeof($result);$i++){
+            //echo "Date is ".$result[$i]['dates']."-----";
+
+            //Convert date string into DateTime object format
+            $date = new DateTime($result[$i]['dates']);
+
+            $differ = $today->diff($date);
+
+            //Get the differences in days
+            $difference = $differ->format('%a');
+            
+            //Get if it is positive or negative differences in days
+            $bool = $differ->format('%R');
+            //echo " | differencesss in  ".$bool." ".$difference;
+
+            //If the schedule was more than a week ago
+            if($bool=='-' && $difference > '7'){
+                $current = array(
+                    'owner_id'          => $result[$i]['owner_id'],
+                    'pet_name'          => $result[$i]['pet_name'],
+                    'bool'              => '-',
+                    'days'              => '7',
+                    'achievement'       => $result[$i]['achievement_name'],
+                    'dates'             => $result[$i]['dates'],
+                    'clinic_name'       => $result[$i]['clinic_name'],
+                    'pet_id'            => $result[$i]['pet_id'],
+                    'achievement_id'    => $result[$i]['achievement_id']
+                );
+                array_push($old, $current);
+            }
+
+            if($difference=='7'){
+                //If the schedule was a week ago
+                if($bool=='-'){
+                    $current = array(
+                        'owner_id'          => $result[$i]['owner_id'],
+                        'pet_name'          => $result[$i]['pet_name'],
+                        'bool'              => '-',
+                        'days'              => '7',
+                        'achievement'       => $result[$i]['achievement_name'],
+                        'dates'             => $result[$i]['dates'],
+                        'clinic_name'       => $result[$i]['clinic_name'],
+                        'pet_id'            => $result[$i]['pet_id'],
+                        'achievement_id'    => $result[$i]['achievement_id']
+                    );
+                    array_push($array, $current);
+                }
+                //If the schedule is a week from now
+                else if ($bool=='+'){
+                    $current = array(
+                        'owner_id'          => $result[$i]['owner_id'],
+                        'pet_name'          => $result[$i]['pet_name'],
+                        'bool'              => '+',
+                        'days'              => '7',
+                        'achievement'       => $result[$i]['achievement_name'],
+                        'dates'             => $result[$i]['dates'],
+                        'clinic_name'       => $result[$i]['clinic_name'],
+                        'pet_id'            => $result[$i]['pet_id'],
+                        'achievement_id'    => $result[$i]['achievement_id']
+                    );
+                    array_push($array, $current);
+                }
+            }
+            //If the schedule is today
+            if($difference=='0'){
+                $current = array(
+                    'owner_id'          => $result[$i]['owner_id'],
+                    'pet_name'          => $result[$i]['pet_name'],
+                    'bool'              => null,
+                    'days'              => '0',
+                    'achievement'       => $result[$i]['achievement_name'],
+                    'dates'             => $result[$i]['dates'],
+                    'clinic_name'       => $result[$i]['clinic_name'],
+                    'pet_id'            => $result[$i]['pet_id'],
+                    'achievement_id'    => $result[$i]['achievement_id']
+                );
+                array_push($array, $current);
+            }
+        }
+
+        //Removing old notifications
+        for($a=0;$a<sizeof($old);$a++){
+            $this->helper->removeNotification($old[$a]['owner_id'],$old[$a]['pet_id'],$old[$a]['achievement_id']);
+        }
+
+        return $array;
+    }
+
+
+    /**
+     * Checks the notification list daily and sends mail to pet owner about vaccination schedules
+     * @return Boolean Returns true if successfully send mail
+     */
+    public function sendMail(){
+        $result = $this->dailyCheck();
+
+        $messagePart1 = "Hi there,\r\n This is a reminder from Petrinary that your pet";
+        $messagePart2 = "is due for";
+
+        //Typical subject
+        $subject = "Petrinary Vaccination Notification";
+
+        for($i=0;$i<sizeof($result);$i++){
+            //Concatenate the message of the email
+            $message = $messagePart1." ".$result[$i]['pet_name']." ".$messagePart2." ".$result[$i]['achievement'];
+
+            if($result[$i]['days']=='7'){
+                if($result[$i]['bool']=='-'){
+                    $message = $message." a week ago on";
+                }else if($result[$i]['bool']=='+'){
+                    $message = $message." a week from today on";
+                }
+            }else if($result[$i]['days']=='0'){
+                $message = $message." today on";
+            }
+
+            $message = $message." ".$result[$i]['dates'].".";
+
+            //If this pet has no home clinic
+            if($result[$i]['clinic_name']!=null){
+                $home = "\r\nPlease visit your home clinic ".$result[$i]['clinic_name'];
+            }
+            else if($result[$i]['clinic_name']==null){
+                $home = "\r\nYou have not selected a home clinic for this pet ".
+                        "Please go to www.petrinary.com and take advantage of our 'Find A Clinic' service for this vaccination";
+            }
+
+
+            $message = $message."\n".$home;
+
+            //Message lines should not exceed 70 characters (PHP Rule), so wrapping it
+            $message = wordwrap($message, 70);
+            //echo $message."+++++++++";
+
+            //Sender
+            $from = "From: petrinary@gmail.com";
+
+            //Recipient
+            $to = $result[$i]['owner_id'];
+
+            //Sending mail to recipient
+            mail($to,$subject,$message,$from);
+
+        }
+    }
+
+    /**
+     * Adding a new pet into the notification list
+     * @param String $p_ownerId The Pet's Owner ID
+     * @param String $p_pet_id The Pet's ID
+     * @param String $p_birthday The Pet's DOB
+     */
+    public function addToMail($p_ownerId,$p_pet_id,$p_birthday){
+        //Get the achievement set "Vaccinations"
+        $result = $this->getAllAchievementForSet("7c44262b-db2a-4d69-806d-1985d0efb59b");
+
+        //Set $p_birthday into DateTime format
+        $bday = new DateTime($p_birthday);
+
+
+        /********************
+        *
+        *   Initial Vaccine
+        *
+        /********************/
+        //Get the 1st vaccination ID
+        $first = $result[0]->getId();
+
+        //1st vaccination schedule date
+        $firstDate = $bday->add(new DateInterval('P7W'));
+        //echo "First(".$firstDate->format('Y-m-d').")";
+        
+        //Adding 1st vaccination into notification list
+        $this->helper->addToMail($p_ownerId,$p_pet_id,$firstDate,$first);
+
+        //Reset back to $p_birthday (as vaccination schedule is based on DOB)
+        $bday->sub(new DateInterval('P7W'));
+
+
+        /********************
+        *
+        *   Booster Shot
+        *
+        /********************/
+        //Get the 2nd vaccination ID
+        $second = $result[1]->getId();
+        
+        //2nd vaccination schedule date
+        $secondDate = $bday->add(new DateInterval('P11W'));      
+        //echo "Second(".$secondDate->format('Y-m-d').")";
+
+        //Adding 2nd vaccination notification list
+        $this->helper->addToMail($p_ownerId,$p_pet_id,$secondDate,$second);
+        
+        //Reset back to $p_birthday (as vaccination schedule is based on DOB)
+        $bday->sub(new DateInterval('P11W'));
+
+
+        /********************
+        *
+        *   Final Booster Shot
+        *
+        /********************/
+        //Get the 3rd vaccination ID
+        $third = $result[2]->getId();
+
+        //3rd vaccination schedule date
+        $thirdDate = $bday->add(new DateInterval('P16W'));
+        //echo "Third(".$thirdDate->format('Y-m-d').")";
+
+        //Adding 3rd vaccination notification list
+        $this->helper->addToMail($p_ownerId,$p_pet_id,$thirdDate,$third);
+
+        //Reset back to $p_birthday (as vaccination schedule is based on DOB)
+        $bday->sub(new DateInterval('P16W'));
+
+
+        /********************
+        *
+        *   Rabies Shot
+        *
+        /********************/
+        //Get the 4th vaccination ID
+        $fourth = $result[3]->getId();
+
+        //4th vaccination schedule date
+        $fourthDate = $bday->add(new DateInterval('P24W'));
+        //echo "Fourth(".$fourthDate->format('Y-m-d').")";
+
+        //Adding 4th vaccination notification list
+        $this->helper->addToMail($p_ownerId,$p_pet_id,$fourthDate,$fourth);
+
+        //Reset back to $p_birthday (as vaccination schedule is based on DOB)
+        $bday->sub(new DateInterval('P24W'));
+
+
+        /********************
+        *
+        *   Annual Shot
+        *
+        /********************/
+        //Get the 5th vaccination ID
+        $fifth = $result[4]->getId();
+
+        //5th vaccination schedule date
+        $fifthDate = $bday->add(new DateInterval('P1Y'));
+        //echo "Fifth(".$fifthDate->format('Y-m-d').")";
+
+        //Adding 5th vaccination notification list
+        $this->helper->addToMail($p_ownerId,$p_pet_id,$fifthDate,$fifth);
+        
+        //Reset back to $p_birthday (as vaccination schedule is based on DOB)
+        $bday->sub(new DateInterval('P1Y'));
+
+
+    }
+
+
 
 }	
 ?>

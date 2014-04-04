@@ -70,7 +70,7 @@ $root = $_SERVER['DOCUMENT_ROOT'];
                 return $rows;
             }
             catch(\PDOException $e){
-                //die('Failed to executeUpdatePrepared' . $e->getMessage());
+                die('Failed to executeUpdatePrepared' . $e->getMessage());
                 throw new PDOException($e->getCode());
             }
         }

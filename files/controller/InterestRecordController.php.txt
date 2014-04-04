@@ -6,6 +6,9 @@ require_once $root . '/../sys/controller/ModelController.php';
 require_once $root . '/../libs/Slim/Slim.php';
 require_once $root . '/../sys/utils/image_utils.php';
 
+/**
+ * Controller for the /InterestRecord route.
+ */
 class InterestRecordController implements RouteController {
 
   private $mc;

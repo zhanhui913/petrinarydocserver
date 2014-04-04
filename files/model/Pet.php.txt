@@ -51,7 +51,7 @@ class Pet implements JsonSerializable{
 	/**
 	* Net points accumulated by a Pet
 	*/
-	private $netPoints;
+	private $points;
 	/**
 	* Clinic object for home clinic
 	*/
@@ -77,7 +77,7 @@ class Pet implements JsonSerializable{
 	*	@param Array[Picture Object] $p_picture_list Array of picture objects
 	*	@param Array[Interest Object] $p_interest_list Array of interest objects
 	*/
-	public function setInfo($p_info_array,$p_picture_list,$p_interest_list, $p_clinic, $p_achievement_list){
+	public function setInfo($p_info_array,$p_picture_list,$p_interest_list, $p_clinic, $p_achievement_list,$p_species){
 		$this->setName($p_info_array['name']);
     	$this->setPetId($p_info_array['pet_id']);
     	$this->setOwnerId($p_info_array['owner_id']);
@@ -86,9 +86,9 @@ class Pet implements JsonSerializable{
 		$this->setAge($p_info_array['age']);
 		$this->setColour($p_info_array['colour']);
 		$this->setBreed($p_info_array['breed']);
-		$this->setSpecies($p_info_array['species']);
+		$this->setSpecies($p_species);
 		$this->setIsNeutered($p_info_array['isNeutered']);
-    	$this->setNetPoints($p_info_array['net_points']);
+    	$this->setPoints($p_info_array['points']);
     	$this->setInterestList($p_interest_list);
     	$this->setPictureList($p_picture_list);
 		$this->setClinic($p_clinic);
@@ -134,8 +134,8 @@ class Pet implements JsonSerializable{
 	public function getIsNeutered(){
 		return $this->isNeutered;
 	}
-	public function getNetPoints(){
-		return $this->netPoints;
+	public function getPoints(){
+		return $this->points;
   	}
   	public function getInterestList(){
  	 	return $this->interestList;
@@ -184,8 +184,8 @@ class Pet implements JsonSerializable{
 	public function setIsNeutered($p_isNeutered){
 		$this->isNeutered = $p_isNeutered;
     	}
-	public function setNetPoints($p_net_points){
-  	       $this->netPoints = $p_net_points;
+	public function setPoints($p_points){
+  	       $this->points = $p_points;
  	}
 	public function setInterestList($p_interest_list){
 	 	$this->interestList = $p_interest_list;
@@ -214,13 +214,13 @@ class Pet implements JsonSerializable{
   			'colour'    	=> $this->colour,
   			'breed'     	=> $this->breed,
   			'species'   	=> $this->species,
-    		'isNeutered'        	=> $this->isNeutered,
-    		'points'    	=> $this->netPoints,
+    		'isNeutered'   	=> $this->isNeutered,
+    		'points'    	=> $this->points,
     		'interests' 	=> $this->interestList,
     		'pictures'  	=> $this->pictureList,
     		'homeClinic'	=> $this->clinic,
     		'isActive'		=> $this->active,
-        'achievements' => $this->achievementRecords
+        	'achievements' 	=> $this->achievementRecords
 		);
 	}
 }

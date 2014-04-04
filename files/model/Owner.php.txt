@@ -27,8 +27,12 @@ class Owner implements JsonSerializable{
     private $ownerPicPath;
     /**
     * Array of pet objects associated with an owner
-    */
+     */
     private $petList = array();
+    /*
+     * Owner Net Points
+     */
+    private $ownerNetPoints;
     
     /**
      * Populate every field in Owner object
@@ -40,7 +44,9 @@ class Owner implements JsonSerializable{
         $this->setUsername($p_info_array['username']);
         $this->setActive($p_info_array['active']);
         $this->setPicPath($p_info_array['pic_path']);
+        $this->setNetPoints($p_info_array['net_points']);
         $this->setPetList($p_pet_list);
+        
     }
 
     /**
@@ -66,7 +72,10 @@ class Owner implements JsonSerializable{
     public function getPicPath(){
         return $this->ownerPicPath;
     }
-
+    
+    public function getNetPoints(){
+        return $this->ownerNetPoints;
+    }
     /**
      * Setters
      */
@@ -91,6 +100,10 @@ class Owner implements JsonSerializable{
         $this->petList = $p_petList;
     }
 
+    public function setNetPoints($p_net_points){
+        $this->ownerNetPoints = $p_net_points;
+    }
+
     /**
     * Data to be serialized into JSON
     * @return Array
@@ -99,9 +112,10 @@ class Owner implements JsonSerializable{
         return array(
             'email'     => $this->ownerEmail,
             'username'  => $this->ownerUsername,
-            'active'    => $this->ownerActive,
+            'isActive'  => $this->ownerActive,
             'avatar'    => $this->ownerPicPath,
-            'pets'      => $this->petList
+            'pets'      => $this->petList,
+            'netPoints' => $this->ownerNetPoints
         );
     }
 }

@@ -63,7 +63,7 @@ class LoginController implements RouteController {
 		
 		
 		// Get user info from the correct table
-		if ($role == 'clinic')
+		if ($role == ROLE_CLINIC)
 			$user = $this->mc->checkClinicAccount($username);
 		else
 			$user = $this->mc->checkOwnerAccount($username);
@@ -79,8 +79,12 @@ class LoginController implements RouteController {
 			// TODO: clinic login isn't salted, would need this instead:
 			if ($hashPassword == $user['pass']) {
 			//if ($password == $user['pass']) {
-				set_session_variables($username, $hashPassword, $role);
 				$loginSuccessful = TRUE;	
+				if ($role == ROLE_CLINIC) {
+					set_session_variables($username, $hashPassword, $role, $username);
+				} else {
+					set_session_variables($username, $hashPassword, $role, $user['email']);
+				}
 			}
 		}
 		
@@ -110,7 +114,6 @@ class LoginController implements RouteController {
 				$redirectTo = '/owner/' . $username;
 		}
 		
-
 		echo json_encode(array(
 				'loginSuccessful' => $loginSuccessful,
 				'redirectTo' => $redirectTo

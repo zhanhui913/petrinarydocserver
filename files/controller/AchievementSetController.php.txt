@@ -1,0 +1,163 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controls actions related to the /achievementsets route.
+ */
+class AchievementSetController implements RouteController {
+
+  /** Instance of Slim application. */
+  private $app;
+  /** Instance of ModelController. */
+  private $mc;
+
+  /**
+   * Constructor.
+   */
+  public function __construct() {
+    $this->app = Slim\Slim::getInstance();
+    $this->mc = new ModelController();
+  }
+
+  /**
+   * Ensure that any requests coming to this controller are from an admin.
+   * Return 401 if this is not the case.
+   */
+  private function authorizeAction() {
+    if (!authorize($this->app)) $this->app->halt(401);
+    if ($_SESSION['role'] != ROLE_ADMIN) {
+      $this->app->halt(401);
+    }
+  }
+
+  /** Return JSON object of all achievement set in the database. */
+  public function index(&$args) {
+    echo json_encode($this->mc->getAllAchievementSet());
+  }
+
+  /**
+   * Create instance of AchievementSet in database.
+   *@param Array $args Array of arguments.
+   */
+  public function create(&$args) {
+
+    $this->authorizeAction();
+
+    if (!isset($args['set'])                ||
+        !isset($args['set']['name'])        ||
+        !isset($args['set']['description']) ||
+        !isset($args['set']['species'])     ){
+      $this->app->halt(400);
+    }
+
+    $id = $this->mc->addAchievementSet(
+      $args['set']['name'],
+      $args['set']['description']
+    );
+
+    if ($id == null) {
+      echo json_encode(array(
+          'id'    => null,
+          'error' => 'Upload of achievement set failed.'
+        )
+      );
+    } else {
+      // Add eligible species to achievement set
+      if ($args['set']['species'] != null) {
+        
+        $speciesList = $args['set']['species'];
+
+        for ($i = 0; $i < sizeof($speciesList); $i++) {
+          // TODO: should roll back on insertion failure
+          $this->mc->addSpeciesToSet($speciesList[$i]['id'], $id);
+        }
+      }
+      echo json_encode(array('id' => $id));
+    }
+
+  }
+
+  /**
+   * Echo JSON serialized AchievementSet with a particular id.
+   * @param Array $args Array of arguments.  Must include key 'id' whose value
+   * is the id of the achievement set to be retrieved.
+   */
+  public function show(&$args) {
+    if (!isset($args['id'])) {
+      $this->app->halt(401);
+    }
+
+    $set = $this->mc->getAchievementSet($args['id']);
+    if ($set == null) {
+      $this->app->halt(404);
+    }
+    $achievements = $this->mc->getAllAchievementForSet($args['id']);
+    echo json_encode(array(
+        'set'           => $set,
+        'achievements'  => $achievements
+      )
+    );
+  }
+
+  /**
+   * Update the an instance of AchievementSet with the arguments passed.
+   * @param $args Array The array of arguments.  See function body for details.
+   */
+  public function update(&$args) {
+    
+    $this->authorizeAction();
+
+    if (!isset($args['set'])                ||
+        !isset($args['set']['id'])          ||
+        !isset($args['set']['name'])        ||
+        !isset($args['set']['description']) ||
+        !isset($args['set']['species'])     ){
+      $this->app->halt(400);
+    }
+
+    $id = $args['set']['id'];
+
+    // Edit operation not wrapped in transaction, so we'll use simple or
+    // and only return if ONE of the operations was successful.
+    $ret = $this->mc->editAchievementSetDescription(
+      $id, 
+      $args['set']['description']
+    );
+
+    $ret = $ret || $this->mc->editAchievementSetName(
+      $id, 
+      $args['set']['name']
+    );
+
+    $ret = $ret || $this->mc->replaceSpeciesListForSet(
+      $id,
+      $args['set']['species']
+    );
+    echo json_encode(array('wasSuccessful' => $ret));
+  }
+
+  /**
+   * Destory the instance of AchievementSet with the given id.
+   * @param Array $args Array of arguments.  One key value must be 'id' whose
+   * value is the id fo the AchievementSet instance to be destroyed.
+   */
+  public function destroy(&$args) {
+
+    $this->authorizeAction();
+
+    if (!isset($args['id'])) {
+      $this->app->halt(400);
+    }
+    $ret = $this->mc->deleteAchievementSet($args['id']);
+    echo json_encode(array('wasSuccessful' => $ret));
+  }
+
+}
+
+
+?>

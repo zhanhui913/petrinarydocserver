@@ -34,6 +34,10 @@ class Achievement implements JsonSerializable{
     */
     private $total;
     /**
+    *  Picture path of the achievement
+    */
+    private $pic_path;
+    /**
     *  achievementSet object
     */
     private $achievementSet;
@@ -49,8 +53,8 @@ class Achievement implements JsonSerializable{
         $this->setNext($p_info_array['next']);
         $this->setPosition($p_info_array['position']);
         $this->setTotal($p_info_array['total']);
+        $this->setPicPath($p_info_array['pic_path']);
         $this->setAchievementSet($p_info_array);
-
     }
     
     /**
@@ -77,6 +81,9 @@ class Achievement implements JsonSerializable{
     }
     public function getTotal() {
         return $this->total;
+    }
+    public function getPicPath() {
+        return $this->pic_path;
     }
     public function getAchievementSet() {
         return $this->achievementSet;
@@ -107,6 +114,9 @@ class Achievement implements JsonSerializable{
     public function setTotal($p_total) {
         $this->total = $p_total;
     }
+    public function setPicPath($p_pic_path) {
+        $this->pic_path = $p_pic_path;
+    }
     public function setAchievementSet($p_achievementSet) {
         $this->achievementSet = $p_achievementSet;
 
@@ -133,7 +143,8 @@ class Achievement implements JsonSerializable{
             'next'   => $this->next,
             'position' => $this->position,
             'total'          => $this->total,
-            'set'     => $this->achievementSet
+            'set'     => $this->achievementSet,
+            'src'     => $this->pic_path
         );
     }
 }

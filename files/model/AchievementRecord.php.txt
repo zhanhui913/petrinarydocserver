@@ -14,9 +14,25 @@ class AchievementRecord implements JsonSerializable{
      * The date of last update 
      */
     private $date;
-    private $clinicId;
-    private $points;
 
+    /**
+     * Clinic Id
+     */
+    private $clinicId;
+
+    /**
+     * Record Points
+     */
+    private $recordPoints;
+    /**
+     * Current Points 
+     */
+    private $currretPoints;
+    /**
+     * Total Points of the set
+     */
+    private $totalSetPoints;
+    
     /**
      * The achievement that the pet currently achieved
      */
@@ -35,7 +51,13 @@ class AchievementRecord implements JsonSerializable{
 
 		$this->setPetId($p_info_array['pet_id']);
         $this->setDate($p_info_array['dates']);
-        $this->setPoints($p_info_array['points']);
+try{
+        $this->setRecordPoints($p_info_array['record_points']);
+        $this->setCurrentPoints($p_info_array['current_points']);
+        $this->setTotalSetPoints($p_info_array['total_set_points']);
+}catch(Exception $e){
+    echo 'Caught exception: ',  $e->getMessage(), "\n";
+}
         $this->setClinicId($p_info_array['clinic_id']);
 
         $this->currentAchievement = $p_current_achievement;
@@ -79,12 +101,21 @@ class AchievementRecord implements JsonSerializable{
     public function setDate($p_date){
         $this->date = $p_date;
     }
-    public function setPoints($p_points){
-        $this->date = $p_points;
+    public function setRecordPoints($p_record_points){
+        $this->recordPoints = $p_record_points;
     }
     public function setClinicId($p_clinic_id){
         $this->clinicId = $p_clinic_id;
     }
+
+    public function setTotalSetPoints($p_total_points){
+        $this->totalSetPoints = $p_total_points;
+    }
+
+    public function setCurrentPoints($p_current_points){
+        $this->currentPoints = $p_current_points;
+    }
+
     public function setCurrentAchievement($p_current_achievement){
         $this->currentAchievement = $p_current_achievement;
     }
@@ -101,7 +132,9 @@ class AchievementRecord implements JsonSerializable{
 			'petId'                 => $this->petId,
 			'date'                  => $this->date,
             'clinicId'              => $this->clinicId,
-            'points'                => $this->points,
+            'recordPoints'          => $this->recordPoints,
+            'totalSetPoints'        => $this->totalSetPoints,
+            'currentPoints'         => $this->currentPoints,
 			'currentAchievement'    => $this->currentAchievement,
             'nextAchievement'       => $this->nextAchievement
         );

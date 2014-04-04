@@ -5,7 +5,9 @@ require_once $root . '/../sys/controller/RouteController.php';
 require_once $root . '/../sys/controller/ModelController.php';
 require_once $root . '/../libs/Slim/Slim.php';
 
-
+/**
+ * Controller for the /Clinic route.
+ */
 class ClinicController implements RouteController {
 
 	private $mc;

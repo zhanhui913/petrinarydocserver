@@ -27,7 +27,7 @@ class AdminController implements RouteController {
   	$password = $args['password'];
   	$role = 'admin';
   	$redirectTo = null;
-  	
+
   	/**
   	 * Determines if the some is attempting to guess the password of the user with
   	 * user_id by querying the db for the number of attemps within the last 5
@@ -102,7 +102,18 @@ class AdminController implements RouteController {
   }
   public function show(&$args) {
 
-    // TODO: login check, make sure they can access this resource
+    if (!isset($args['id'])) {
+      $this->app->redirect('/403');
+    } else {
+
+      $user = $this->mc->checkAdminLogin($args['id']);
+
+      if ($user == null) $this->app->redirect('/404');
+      else if ($user['email'] != $args['id']) {
+        $this->app->redirect('/404');
+      }
+    }
+
     $this->app->render('/admin/admin-tpl.html');
 
   }
@@ -110,3 +121,4 @@ class AdminController implements RouteController {
   public function destroy(&$args) {}
 }
 ?>
+

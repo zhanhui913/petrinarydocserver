@@ -5,7 +5,9 @@ $root = $_SERVER['DOCUMENT_ROOT'];
 
 require_once $root . "/../sys/controller/ModelController.php";
 
-// TODO: factor into AuthUtils class?
+defined('ROLE_ADMIN') ? NULL : define('ROLE_ADMIN', 'admin');
+defined('ROLE_OWNER') ? NULL : define('ROLE_OWNER', 'owner');
+defined('ROLE_CLINIC') ? NULL : define('ROLE_CLINIC', 'clinic');
 
 /**
  * Called to start a secure session to the server.
@@ -61,26 +63,23 @@ function authorize($app, $username=null) {
 
 		$mc = new modelController();
 		
-		if ($_SESSION['role'] == 'admin')
+		if ($_SESSION['role'] == ROLE_ADMIN)
 			$user = $mc->checkAdminLogin($username);
-		elseif ($_SESSION['role'] == 'clinic')
+		elseif ($_SESSION['role'] == ROLE_CLINIC)
 			$user = $mc->checkClinicAccount($username);
 		else
 			$user = $mc->checkOwnerAccount($username);
-		
 			
 		$loginString = hash('sha512', $user['pass'] . $_SERVER['HTTP_USER_AGENT'] 
 				. $_SESSION['role']);
 			
-		
 		if($_SESSION['loginString'] == $loginString) {
 			//User is logged in and has the correct permissions
 			return true;
 		}
 		else {
-			var_dump('asdfasdfasdf');
 			// User does not have permissions
-			//$app->redirect('/403');
+			$app->redirect('/403');
 		}
 	}
 	else {
@@ -89,9 +88,10 @@ function authorize($app, $username=null) {
 	}
 }
 
-function set_session_variables($username, $password, $role) {
+function set_session_variables($username, $password, $role, $email) {
 	// Correct credentials
 	$_SESSION['username'] = $username;
+	$_SESSION['email'] = $email;
 	$_SESSION['role'] = $role;
 	$userBrowser = $_SERVER['HTTP_USER_AGENT'];
 	

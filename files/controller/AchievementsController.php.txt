@@ -1,0 +1,280 @@
+<?php
+
+$root = $_SERVER['DOCUMENT_ROOT'];
+require_once $root . '/../sys/controller/RouteController.php';
+require_once $root . '/../sys/controller/ModelController.php';
+require_once $root . '/../sys/utils/login_utils.php';
+require_once $root . '/../libs/Slim/Slim.php';
+
+/**
+ * Controls actions related to the /achievementset/:id/achievements route.
+ */
+class AchievementsController implements RouteController {
+
+  /** Instance of Slim application. */
+  private $app;
+  /** Instance of ModelController. */
+  private $mc;
+
+  /**
+   * Constructor.
+   */
+  public function __construct() {
+    $this->app = Slim\Slim::getInstance();
+    $this->mc = new ModelController();
+  }
+
+  /**
+   * Ensure that any requests coming to this controller are from an admin.
+   * Return 401 if this is not the case.
+   */
+  private function authorizeAction() {
+    if (!authorize($this->app)) $this->app->halt(401);
+    if ($_SESSION['role'] != ROLE_ADMIN) {
+      $this->app->halt(401);
+    }
+  }
+
+  public function index(&$args) {
+
+    if (!isset($args['setId'])) {
+      $this->app->halt(400);
+    }
+
+    $set = $this->mc->getAchievementSet($args['setId']);
+    if ($set == null) {
+      $this->app->halt(404);
+    }
+    $achievements = $this->mc->getAllAchievementForSet($args['setId']);
+    echo json_encode(array(
+        'set'           => $set,
+        'achievements'  => $achievements
+      )
+    );
+  }
+
+  public function create(&$args) {
+
+    $this->authorizeAction();
+
+    if (!isset($args['setId'])                      ||
+        !isset($args['achievement'])                ||
+        !isset($args['achievement']['name'])        ||
+        !isset($args['achievement']['description']) ||
+        !isset($args['achievement']['total'])       ||
+        !isset($args['achievement']['position'])    ||
+        !isset($args['achievement']['points']))     {
+      $this->app->halt(400);
+    }
+
+
+    // Attempt to upload image to filesystem if present.
+    $src = null;
+    if (isset($args['imgFile'])) {
+
+      $img = $args['imgFile'];
+
+      // Create or find directory in which to place picture for this 
+      // achievement set
+      $picturesHome = '/api/user_pictures/achievements/';
+      $hash = md5($args['setId']);
+      $root = $_SERVER['DOCUMENT_ROOT'];
+      umask(0);
+      if (is_dir($root . $picturesHome . $hash) == false) {
+        mkdir($root . $picturesHome . $hash, 0777);
+        chmod($root . $picturesHome . $hash, 0777);
+      }
+
+      // Keep only last 10 characters of file name in the case that
+      // file name is too long to be stored in the database.
+      $name = substr($img['name'], -10);
+      $timestamp = time();
+      $src = $picturesHome . $hash .'/' . $timestamp . '_' . $name;
+
+      $wasSuccessful = move_uploaded_file($img['tmp_name'], $root . $src);
+
+      if ($wasSuccessful) {
+        $args['achievement']['src'] = $src;
+      } else {
+        echo json_encode(
+          array('error' => 'Save of file to filesystem failed.')
+        );
+        // Do no more processing.
+        return;
+      }
+    } else {
+      $args['achievement']['src'] = null;
+    }
+
+    $ret = $this->mc->addAchievement(
+      $args['achievement']['points'],
+      $args['achievement']['name'],
+      $args['achievement']['description'],
+      null,                                 // next achievement
+      $args['achievement']['total'],
+      $args['achievement']['position'],
+      $args['setId'],
+      $args['achievement']['src']
+    );
+
+    if ($ret != null) {
+      // In no man's land.  Creation and addition to set should really
+      // be a transaction, but here we go:
+      $this->mc->addAchievementToSet($ret, $args['setId']);
+    } 
+
+    echo json_encode(array('id' => $ret, 'src' => $src));
+
+  }
+
+  public function show(&$args) {
+
+    if (!isset($args['id'])) {
+      $this->app->halt(401);
+    }
+
+    $set = $this->mc->getAchievementSet($args['id']);
+    if ($set == null) {
+      $this->app->halt(404);
+    }
+    $achievements = $this->mc->getAllAchievementForSet($args['id']);
+    echo json_encode(array(
+        'set'           => $set,
+        'achievements'  => $achievements
+      )
+    );
+  }
+  public function update(&$args) {
+
+    $this->authorizeAction();
+
+    if (!isset($args['setId'])                      ||
+        !isset($args['id'])                         ||
+        !isset($args['achievement'])                ||
+        !isset($args['achievement']['id'])          ||
+        ($args['id'] != $args['achievement']['id']) ||
+        !isset($args['achievement']['name'])        ||
+        !isset($args['achievement']['description']) ||
+        !isset($args['achievement']['total'])       ||
+        !isset($args['achievement']['position'])    ||
+        !isset($args['achievement']['points']))     {
+      $this->app->halt(400);
+    }
+
+    // Retrieve previous attributes from database for comparison with values
+    // passed -- only attempt to update values which have changed.
+    // TODO: all these operations should really be wrapped in a db transaction.
+    $id = $args['id'];
+    $prev = $this->mc->getAchievement($id);
+    $new = $args['achievement'];
+    
+    //Cannot update achievement which does not exist.
+    if ($prev == null) {
+      $this->app->halt(400);
+    }
+
+    // Attempt to upload image to filesystem if present.
+    $src = null;
+    if (isset($args['imgFile'])) {
+
+      $img = $args['imgFile'];
+      $oldSrc = $prev->getPicPath();
+      // Create or find directory in which to place picture for this 
+      // achievement set
+      $picturesHome = '/api/user_pictures/achievements/';
+      $hash = md5($args['setId']);
+      $root = $_SERVER['DOCUMENT_ROOT'];
+      umask(0);
+      if (is_dir($root . $picturesHome . $hash) == false) {
+        mkdir($root . $picturesHome . $hash, 0777);
+        chmod($root . $picturesHome . $hash, 0777);
+      }
+
+      // Keep only last 10 characters of file name in the case that
+      // file name is too long to be stored in the database.
+      $name = substr($img['name'], -10);
+      $timestamp = time();
+      $src = $picturesHome . $hash .'/' . $timestamp . '_' . $name;
+
+      $wasSuccessful = move_uploaded_file($img['tmp_name'], $root . $src);
+
+      if ($wasSuccessful) {
+
+        // If update was successful, remove old image file.  Else, remove newly
+        // saved file.
+        $wasSrcEditSuccessful = $this->mc->editAchievementPicPath($id, $src);
+
+        if ($wasSrcEditSuccessful) {
+          unlink($root . $oldSrc);
+        } else {
+          unlink($root . $src);
+            echo json_encode(
+              array('error' => 'Save of file to filesystem failed.')
+            );
+        }
+      } else {
+        echo json_encode(
+          array('error' => 'Save of file to filesystem failed.')
+        );
+        // Do no more processing.
+        return;
+      }
+    } else {
+      $args['achievement']['src'] = null;
+    }
+
+    // TODO: should roll back previous changes if ret is ever false ...
+    // but that is really a db issue
+    $ret = true;
+    if (($prev->getName() != $new['name']) && $ret) {
+      $ret = $this->mc->editAchievementName($id, $new['name']);
+    }
+
+    if (($prev->getDescription() != $new['description']) && $ret) {
+      $ret = $ret && $this->mc->editAchievementDescription(
+        $id, $new['description']);
+    }
+
+    if (($prev->getPoints() != $new['points']) && $ret) {
+      $ret = $ret && $this->mc->editAchievementPoints($id, $new['points']);
+    }
+
+    // Check for position update ...
+    echo json_encode(array('wasSuccessful' => $ret));
+  }
+  
+  public function destroy(&$args) {
+
+    $this->authorizeAction();
+
+    if (!isset($args['id'])) {
+      $this->app->halt(400);
+    }
+    $wasSuccessful = $this->mc->deleteAchievement($args['id']);
+    echo json_encode(array('wasSuccessful' => $wasSuccessful));
+  }
+
+  /**
+   * Update the position of an achievement as per the arguments passed.
+   * @param Array $args The array of arguments used to update achievement
+   * position.
+   */
+  public function updatePosition(&$args) {
+    $this->authorizeAction();
+
+    if (!isset($args['id']) || !isset($args['position'])) {
+      $this->app->halt(400);
+    }
+
+    // var_dump($args);
+
+    $wasSuccessful = $this->mc->reorderAchievementSet(
+      $args['id'], 
+      $args['position']
+    );
+    echo json_encode(array('wasSuccessful' => $wasSuccessful));
+  }
+
+}
+?>
+

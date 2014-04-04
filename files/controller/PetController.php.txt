@@ -63,7 +63,7 @@ class PetController implements RouteController {
 			$pet['age'],
 			null,										// colour
 			$pet['breed'],
-			$pet['species'],
+			$pet['species']['id'],	// species id
 			0,											// is neutered
 			0,											// net points
 			$pet['homeClinic'],
